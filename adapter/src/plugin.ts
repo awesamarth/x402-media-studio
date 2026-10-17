@@ -6,11 +6,19 @@ import { x402OutputSchema } from "./paybox.js";
 import { api, apiBase, purchaseProposal, quoteSchema, result } from "./client.js";
 
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/);
-const handle=z.string().regex(/^[a-f0-9]{64}$/).optional();
+const requestHandle=z.string().regex(/^[a-f0-9]{64}$/).describe('Scoped upload-session handle returned by create_request. It identifies this request and is sent only in the X-Request-Handle header to the same Media Studio API. Keep it private; it is not a wallet credential or payment approval.');
+const handle=requestHandle.optional();
 const output = z.object({ data: z.json() }).strict();
-const steps = z.array(z.object({
-  type: z.enum(["transcribe", "localize", "clip", "frames", "repair_subtitles", "convert", "normalize"]),
-}).catchall(z.json())).min(1).max(8);
+const subtitleOptions=z.object({format:z.enum(['srt','vtt']).optional(),overlap:z.enum(['error','trim','preserve']).optional(),sort:z.boolean().optional(),maxChars:z.number().int().min(10).max(100).optional(),maxLines:z.number().int().min(1).max(5).optional()}).strict();
+const steps=z.array(z.discriminatedUnion('type',[
+  z.object({type:z.literal('transcribe'),language:z.enum(['en','auto']).optional()}).strict(),
+  z.object({type:z.literal('localize'),from:z.literal('en').optional(),to:z.literal('es').optional(),text:z.string().max(100000).optional(),options:subtitleOptions.optional()}).strict(),
+  z.object({type:z.literal('clip'),start:z.number().min(0),duration:z.number().positive().max(600)}).strict(),
+  z.object({type:z.literal('frames'),atSeconds:z.array(z.number().min(0)).min(1).max(12).optional(),ocr:z.boolean().optional()}).strict(),
+  z.object({type:z.literal('repair_subtitles'),text:z.string().max(100000).optional(),options:subtitleOptions.optional()}).strict(),
+  z.object({type:z.literal('convert'),targetBytes:z.number().int().min(100000).max(100000000)}).strict(),
+  z.object({type:z.literal('normalize')}).strict(),
+])).min(1).max(8);
 const annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true };
 
 function createServer() {
@@ -20,7 +28,7 @@ function createServer() {
     inputSchema:z.object({}).strict(),outputSchema:output,annotations:{...annotations,readOnlyHint:false,idempotentHint:false},
   },async()=>result(await api('/requests',{})));
   server.registerTool("get_request_asset", {
-    title:"Check uploaded request file",description:"Poll the same request after the user opens upload.pageUrl and chooses their file. Keep requestHandle internally. On uploadStatus ready, use returned assetId with quote_workflow and the same handle. No payment or processing is started.",inputSchema:z.object({requestHandle:z.string().regex(/^[a-f0-9]{64}$/)}).strict(),outputSchema:output,annotations,
+    title:"Check uploaded request file",description:"Poll the same request after the user opens upload.pageUrl and chooses their file. Keep requestHandle internally. On uploadStatus ready, use returned assetId with quote_workflow and the same handle. No payment or processing is started.",inputSchema:z.object({requestHandle}).strict(),outputSchema:output,annotations,
   },async ({requestHandle})=>result(await api('/requests/current',undefined,requestHandle)));
   server.registerTool("inspect_asset", {
     title: "Inspect media asset", description: "Inspect an uploaded asset. Omit assetId to see setup requirements. Upload media directly to the API before using this plugin.",
@@ -35,9 +43,9 @@ function createServer() {
     inputSchema:z.object({importId:id,requestHandle:handle}).strict(),outputSchema:output,annotations,
   },async ({importId,requestHandle})=>result(await api(`/imports/${importId}`,undefined,requestHandle)));
   server.registerTool("quote_workflow", {
-    title: "Quote a media workflow", description: "Get a quote for an ordered workflow. Provider-dependent steps may be unavailable. Does not pay or enqueue work.",
-    inputSchema: z.object({ assetId: id.optional(),source:z.object({url:z.string().url().max(2048),media:z.enum(["audio","video"])}).strict().optional(), steps,requestHandle:handle }).strict(), outputSchema: output, annotations: { ...annotations, readOnlyHint: false },
-  }, async ({requestHandle,...workflow}) => result(await api("/quotes", workflow,requestHandle)));
+    title: "Quote a media workflow", description: "Create and save a price quote for media operations requested by the user on their selected uploaded file or supported source URL. Does not charge the user or start processing. Does not download source media or enqueue a job. Each billable step costs 0.01 USDC. Use from/to for localization, atSeconds for frame timestamps, and targetBytes for compression. Frame timestamps refer to the current media after earlier steps; sample original-time frames before clipping. Backend validation failures return an explicit error, not a quote.",
+    inputSchema: z.object({ assetId: id.optional(),source:z.object({url:z.string().url().max(2048),media:z.enum(["audio","video"])}).strict().optional(), steps,requestHandle:handle }).strict(), outputSchema: output, annotations: { ...annotations, readOnlyHint: false, idempotentHint:false },
+  }, async ({requestHandle,...workflow}) => {try{return result(await api('/quotes',workflow,requestHandle))}catch(error){return {...result({ok:false,error:{code:'quote_failed',message:error instanceof Error?error.message:'Quote request failed'},paymentStarted:false,processingStarted:false}),isError:true}}});
   server.registerTool("purchase_workflow", {
     title: "Prepare workflow payment", description: "Start a real authenticated job in free mode, or prepare an unsigned x402 proposal using the backend quote total in paid mode. Quotes, status and artifact reads do not separately charge. Free mode and zero-total quotes start authenticated jobs without a payment proposal. Clipping from a validated YouTube source URL or server-verified YouTube asset is free; other operations cost 0.01 USDC per workflow step. A frames step including OCR counts once, and all transcription formats together count once. Always use the stored quote total; previous quotes retain their original amount. PayBox obtains approval and sends payment. Poll the PayBox request until terminal, call get_purchase with the original quote ID to retrieve the authenticated job ID, then call get_job. Never repurchase an uncertain payment.",
     inputSchema: z.object({ quoteId: id, idempotencyKey: z.string().min(8).max(100).regex(/^[a-zA-Z0-9_-]+$/),requestHandle:handle }).strict(), outputSchema: x402OutputSchema.partial().extend({data:z.json().optional()}).strict(), annotations:{...annotations,readOnlyHint:false},
