@@ -13,3 +13,7 @@ Propose `/srv/x402-media-studio` with its own non-login service identity, Bun AR
 After explicit deployment/domain approval, add a separate Caddy host block such as `media-api.<user-approved-domain>` reverse-proxying to port 8787. Keep the existing host block and Flappy Bird files unchanged. Domain is only a proposal; no DNS, firewall, TLS, security or server configuration was changed. Configure only the exact API HTTPS hostname in PayBox and MEDIA_API_URL; do not use wildcards. No need for a frontend or public worker port.
 
 Production blockers: payment verification/settlement, receiving wallet, facilitator choice, provider/model choices, authentication and quotas, durable job database, worker isolation, expiration and deletion policy. Resolve these before public access. Pebble was not read or modified.
+
+## After deployment approval
+
+Install FFmpeg through the VPS operating system package manager (the Ubuntu/Debian `ffmpeg` package supplies both `ffmpeg` and `ffprobe`); no manual binary download is needed. Verify both versions and codec support before starting the isolated worker. This package installation has not been performed.
