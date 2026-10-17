@@ -34,7 +34,7 @@ To serve the API, supply an account token through your normal secret process (`L
 
 | Operation | Working output | Scope/limits |
 | --- | --- | --- |
-| `transcribe` | Real whisper.cpp base recognition, segment JSON, SRT and VTT | English verified; `language: en` or `auto`; five-minute input limit; segment estimates, no forced word alignment |
+| `transcribe` | Real whisper.cpp multilingual small recognition, segment JSON, SRT and VTT | English verified; `language: en` or `auto`; five-minute input limit; segment estimates, no forced word alignment |
 | `localize` | Offline English→Spanish captions through CTranslate2/SentencePiece and installed Argos model | Direct `en`→`es` only; cue IDs/count/times preserved; 500 cues, 2,000 characters/512 tokens per cue; human quality review still needed |
 | `clip` | FFmpeg clip extraction | Start/duration inside media; no content-aware highlight selection |
 | `frames` | Selected JPEGs, timestamped JSON manifest, optional real OCR text/boxes/confidence and TSV | `atSeconds` up to 12 samples, default `[0]`; English OCR only; sample times are requested seeks with possible one-frame error; image coordinates reference the scaled output |
@@ -91,4 +91,4 @@ Live billing stays free. All payment validation so far uses fake signatures and 
 
 The existing VPS inspection and isolation plan are in [deployment.md](docs/deployment.md). No deployment, DNS/Caddy change, push or portal submission occurred. Linux ARM64 dependency wheels resolve from pinned hashed locks, but runtime installation/inference and latency on that VPS still need verification. Rebuild whisper.cpp there; do not copy Mac executables/venvs. Public operation also needs retention/quota policy, media isolation and ordinary service hardening. See [morning setup](docs/morning-setup.md) for the remaining actions.
 
-Public URL import: see [setup and limits](docs/url-import.md). The initial guarded downloader is macOS-only; Linux URL import remains unavailable.
+Public URL import: see [setup and limits](docs/url-import.md). Linux uses a network-disabled Docker runner; see the deployment instructions.

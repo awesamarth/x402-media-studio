@@ -1,6 +1,6 @@
 import {readFile,writeFile,stat} from 'node:fs/promises';import {resolve} from 'node:path';import {fileHash} from '../src/pipeline';import {command} from '../src/process';
 const tesseract=Bun.which('tesseract');if(!tesseract)throw Error('Install Tesseract first');
-const settings:Record<string,string>={BILLING_MODE:'free',WHISPER_BIN:resolve('.runtime/whisper.cpp-1.9.4/build/bin/whisper-cli'),WHISPER_MODEL:resolve('.runtime/models/ggml-base.bin'),TESSERACT_BIN:tesseract,TESSDATA_DIR:resolve('.runtime/models/tessdata'),TRANSLATE_PYTHON:resolve('.runtime/translation/venv/bin/python'),TRANSLATE_MODEL_DIR:resolve('.runtime/translation/models/en_es')};
+const settings:Record<string,string>={BILLING_MODE:'free',WHISPER_BIN:resolve('.runtime/whisper.cpp-1.9.4/build/bin/whisper-cli'),WHISPER_MODEL:resolve('.runtime/models/ggml-small.bin'),TESSERACT_BIN:tesseract,TESSDATA_DIR:resolve('.runtime/models/tessdata'),TRANSLATE_PYTHON:resolve('.runtime/translation/venv/bin/python'),TRANSLATE_MODEL_DIR:resolve('.runtime/translation/models/en_es')};
 let prior='';try{prior=await readFile('.env.local','utf8')}catch{}
 const preserved=prior.split('\n').filter(line=>line.trim()&&!Object.keys(settings).some(key=>line.startsWith(key+'=')));
 await writeFile('.env.local',preserved.concat(Object.entries(settings).map(([key,value])=>`${key}=${JSON.stringify(value)}`)).join('\n')+'\n');

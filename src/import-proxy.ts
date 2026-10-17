@@ -31,7 +31,7 @@ export function validateRemoteUrl(input: string): URL {
   return url;
 }
 /** TLS remains end-to-end. The caller must enforce an OS egress guard around the client. */
-export async function startImportProxy(options: {maxBytes?: number} = {}): Promise<{port: number; close(): Promise<void>}> {
+export async function startImportProxy(options: {maxBytes?: number;socketPath?:string} = {}): Promise<{port: number; close(): Promise<void>}> {
   const maxBytes = options.maxBytes ?? 108 * 1024 * 1024;
   if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) throw Error('Invalid proxy byte limit');
   const sockets = new Set<Socket>();
@@ -76,8 +76,8 @@ export async function startImportProxy(options: {maxBytes?: number} = {}): Promi
       } catch {deny();}
     })();
   });
-  await new Promise<void>((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
+  await new Promise<void>((resolve,reject)=>{server.once('error',reject);options.socketPath?server.listen(options.socketPath,resolve):server.listen(0,'127.0.0.1',resolve);});
   const address = server.address();
-  if (!address || typeof address === 'string') throw Error('Proxy listener unavailable');
-  return {port:address.port,close:async()=>{closed=true;for(const socket of sockets) socket.destroy();await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}};
+  if (!address) throw Error('Proxy listener unavailable');
+  return {port:typeof address==='string'?0:address.port,close:async()=>{closed=true;for(const socket of sockets) socket.destroy();await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}};
 }

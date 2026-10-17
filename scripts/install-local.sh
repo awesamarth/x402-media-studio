@@ -30,7 +30,7 @@ fetch_verified https://github.com/ggml-org/whisper.cpp/archive/refs/tags/v1.9.4.
 if [[ ! -d .runtime/whisper.cpp-1.9.4 ]]; then tar -xzf .runtime/whisper-v1.9.4.tar.gz -C .runtime; fi
 cmake -S .runtime/whisper.cpp-1.9.4 -B .runtime/whisper.cpp-1.9.4/build -DCMAKE_BUILD_TYPE=Release -DWHISPER_BUILD_IS_DEV=OFF -DWHISPER_BUILD_TESTS=OFF -DGGML_METAL=OFF -DGGML_BLAS=OFF -DGGML_OPENMP=OFF -DBUILD_SHARED_LIBS=OFF
 cmake --build .runtime/whisper.cpp-1.9.4/build --target whisper-cli -j 2
-fetch_verified https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin .runtime/models/ggml-base.bin 60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe 200000000
+fetch_verified https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin .runtime/models/ggml-small.bin 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b 600000000
 fetch_verified https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata .runtime/models/tessdata/eng.traineddata 7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2 10000000
 cp .runtime/whisper.cpp-1.9.4/samples/jfk.wav fixtures/jfk.wav
 python3 scripts/install-translation.py

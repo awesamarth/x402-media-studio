@@ -30,3 +30,17 @@ The helper was exercised against the existing public `fixtures/jfk.wav` recordin
 `/Users/awesamarth/Desktop/code/x402-media-studio/outputs/try-file/2026-10-17T12-10-38-108Z-97594e84/`
 
 It created no persistent credentials and made no payment/provider call. The source recording was not changed. yt-dlp source ingestion has not started; it remains separate pending work.
+
+## URLs and ordered operations
+
+All commands below start an isolated temporary free API, use actual HTTP requests and save every artifact under outputs/try-file. No persistent token is needed. The service now selects multilingual Whisper small; no automatic base fallback.
+
+```bash
+bun run try:file -- 'https://raw.githubusercontent.com/ggml-org/whisper.cpp/v1.9.4/samples/jfk.wav'
+bun run try:file -- '/absolute/path/to/video.mp4' --steps '[{"type":"clip","start":0,"duration":5},{"type":"normalize"},{"type":"convert","targetBytes":400000},{"type":"frames","ocr":true,"atSeconds":[0,2]}]'
+bun run try:file -- '/absolute/path/to/video.mp4' --steps '[{"type":"transcribe","language":"en"},{"type":"localize","from":"en","to":"es"}]'
+```
+
+The first command produces small-model transcript SRT/VTT/JSON. The second produces numbered intermediate videos, audio metrics, JPEG frames, OCR TSVs and a frame manifest. The third produces the English transcript plus Spanish SRT. Original files stay unchanged. URL selection uses video when steps need frames/clipping/conversion, otherwise audio.
+
+Verified URL source: the upstream direct JFK WAV URL using yt-dlp Generic extractor. YouTube page URLs pass the allowlist validator but have **not** been tested end to end. Their downloader success is conditional; authentication, playlists, live streams, JS challenge workarounds and restriction bypass are unsupported. W3 media URLs are allowlisted but not tested. Do not describe this as general YouTube support.
