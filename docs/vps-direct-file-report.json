@@ -1,0 +1,17 @@
+{
+  "source": "official whisper.cpp v1.9.4 public JFK WAV",
+  "mode": "free",
+  "apiKeyUsed": false,
+  "elapsedSeconds": 12.37,
+  "status": "succeeded",
+  "jobId": "3724a018c19580989cd960a6e9e84deabc025915926bbbeb1cf20ae166b81323",
+  "engine": "whisper.cpp",
+  "modelSha256": "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b",
+  "segments": 1,
+  "artifacts": [
+    "0.transcript.srt",
+    "0.transcript.vtt",
+    "0.transcript.json"
+  ],
+  "transport": "one pinned-public-IP HTTPS request; original hostname TLS/SNI; redirects rejected; media bytes validated locally"
+}

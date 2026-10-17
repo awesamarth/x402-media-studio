@@ -24,4 +24,17 @@ URL diagnosis: direct public JFK fetch succeeded. Both curl and yt-dlp initially
 
 Minimal next public action: append the already prepared x402-media-studio.awesamarth.dev Caddy block, validate the combined config, reload Caddy once, then verify both hostnames. Existing Flappy Bird block stays byte-for-byte intact. No extra service-account/token/network-hardening bundle is requested.
 
-The temporary user-manager unit was replaced with a single normal system service /etc/systemd/system/x402-media-studio.service, running as the existing ubuntu user and enabled at boot. No new accounts or login/linger policy changes were made. It binds127.0.0.1:8787, uses data/service, and reports freeDemo true, paymentConfigured false, urlImports false. A post-install anonymous request returned201 with an automatic scoped handle (not printed), confirming writable state. Root info and health return200. Caddy active config hash remains unchanged and Flappy Bird remainsHTTP200.
+The temporary user-manager unit was replaced with a single normal system service /etc/systemd/system/x402-media-studio.service, running as the existing ubuntu user and enabled at boot. No new accounts or login/linger policy changes were made. It binds127.0.0.1:8787, uses data/service, and reports freeDemo true and paymentConfigured false. URL readiness is now split into directFiles true and videoPlatforms false (see the update below). A post-install anonymous request returned201 with an automatic scoped handle (not printed), confirming writable state. Root info and health return200. Caddy active config hash remains unchanged and Flappy Bird remainsHTTP200.
+
+
+## Direct HTTPS media recovery — current status
+
+The API now fetches direct media files from the two existing allowlisted hosts, `raw.githubusercontent.com` and `media.w3.org`, independently of the platform extractor runner. Accepted path extensions are WAV, MP3, M4A, MP4, WebM, FLAC, OGG, AAC, MOV and MKV. This is a narrow allowlist, not arbitrary URL support.
+
+The downloader validates public IPv4 DNS answers, pins one vetted address, retains the original hostname for TLS certificate checks/SNI, rejects redirects and compressed responses, and enforces content type, 100 MiB, connection/total timeout and local media-duration checks. No OS security or networking policy was changed. Retrieval still begins only after workflow admission; free-demo quotas remain active.
+
+A real anonymous API request on the VPS imported the official whisper.cpp JFK WAV, then ran small-model transcription successfully in 12.37 seconds and returned SRT, VTT and JSON artifacts. No customer API key, payment, cookies or YouTube request was used. See [the actual result](vps-direct-file-report.json). TypeScript checking passed; no new automated tests were written or run for this change.
+
+YouTube remains a separate issue. The earlier ordinary VPS yt-dlp invocation failed at metadata retrieval with `ERROR: [youtube] UF8uR6Z6KLc: Sign in to confirm you're not a bot`. No HTTP status was supplied in that message, and subtitle selection/download had not begun. This does not prove an IP-reputation, IPv4, or relay cause. The Mac relay behavior is separate evidence; no further YouTube requests were made while the user tested the installed CLI manually. Server platform imports remain disabled and fail before payment/execution.
+
+Caddy activation is still pending explicit approval. This update only restarted the existing loopback API service. The existing public site remains outside the app's route.

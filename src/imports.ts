@@ -1,3 +1,5 @@
+import {fetchDirectFile,isDirectFileSource} from './direct-file';
+import {writeFile} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
 import {mkdir,mkdtemp,readdir,rm,stat,readFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
@@ -20,6 +22,7 @@ export function importRequest(value:any):Request {
 }
 /** Every downloader subprocess is restricted to the enforcing local CONNECT proxy. */
 export async function download(url:string,media:'audio'|'video',dir:string,steps:Step[]) {
+ if(isDirectFileSource(url)){const bytes=await fetchDirectFile(url);const path=join(dir,'direct-input');await writeFile(path,bytes);const probe=JSON.parse(await command(['ffprobe','-protocol_whitelist','file,pipe','-v','quiet','-show_format','-of','json',path],{timeoutMs:10000}));const duration=Number(probe.format?.duration);if(!Number.isFinite(duration)||duration<=0||duration>(media==='audio'?300:600))throw Error('Direct media exceeds the supported duration');return bytes}
  if(!['darwin','linux'].includes(process.platform))throw Error('Unsupported import runner platform');
  const linux=process.platform==='linux'||process.env.IMPORT_RUNNER==='docker';
  const proxyDir=linux?await mkdtemp(join(tmpdir(),'media-proxy-')):undefined;
