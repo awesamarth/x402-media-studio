@@ -9,7 +9,6 @@ import {Studio,validate,type Step} from './core';
 import {startImportProxy,validateRemoteUrl} from './import-proxy';
 import {MAX_UPLOAD_BYTES} from './limits';
 import {command} from './process';
-import {tmpdir} from 'node:os';
 import {selectCaptions,type CaptionSource} from './source-captions';
 import {linuxImportCommand} from './import-runner';
 
@@ -26,7 +25,7 @@ export async function download(url:string,media:'audio'|'video',dir:string,steps
  if(isDirectFileSource(url)){const bytes=await fetchDirectFile(url);const path=join(dir,'direct-input');await writeFile(path,bytes);const probe=JSON.parse(await command(['ffprobe','-protocol_whitelist','file,pipe','-v','quiet','-show_format','-of','json',path],{timeoutMs:10000}));const duration=Number(probe.format?.duration);if(!Number.isFinite(duration)||duration<=0||duration>(media==='audio'?300:600))throw Error('Direct media exceeds the supported duration');return bytes}
  if(!['darwin','linux'].includes(process.platform))throw Error('Unsupported import runner platform');
  const linux=process.platform==='linux'||process.env.IMPORT_RUNNER==='docker';
- const proxyDir=linux?await mkdtemp(join(tmpdir(),'media-proxy-')):undefined;
+ const proxyDir=linux?await mkdtemp(join(dir,'.proxy-')):undefined;
  const proxy=await startImportProxy(proxyDir?{socketPath:join(proxyDir,'proxy.sock')}:{});
  const remoteDir=linux?'/work':dir;
  const policy=`(version 1)(allow default)(deny network-outbound)(allow network-outbound (remote tcp "localhost:${proxy.port}"))`;

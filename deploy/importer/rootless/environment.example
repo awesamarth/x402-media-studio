@@ -1,0 +1,6 @@
+# Apply only after rootless Docker is active and the real runner has passed verification.
+DOCKER_BIN=/home/ubuntu/bin/docker
+DOCKER_HOST=unix:///run/user/1001/docker.sock
+IMPORT_RUNNER_ROOTLESS=1
+IMPORT_RUNNER_IMAGE=x402-media-importer:local
+# URL_IMPORTS_ENABLED remains unset until actual isolated runner verification.
