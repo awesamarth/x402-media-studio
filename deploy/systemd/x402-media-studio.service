@@ -1,4 +1,4 @@
-# Review draft only: existing ubuntu account; payment settings required; no customer API key.
+# Existing ubuntu account. Billing mode comes from .env.local; no customer API key.
 [Unit]
 Description=X402 Media Studio API
 After=network-online.target
@@ -12,16 +12,18 @@ WorkingDirectory=/home/ubuntu/x402-media-studio
 EnvironmentFile=/home/ubuntu/x402-media-studio/.env.local
 Environment=HOST=127.0.0.1
 Environment=PORT=8787
-Environment=DATA_DIR=/home/ubuntu/x402-media-studio/data
+Environment=PUBLIC_FREE_DEMO=1
+Environment=DATA_DIR=/home/ubuntu/x402-media-studio/data/service
 ExecStart=/home/ubuntu/x402-media-studio/.runtime/bin/bun src/server.ts
 Restart=on-failure
 RestartSec=3
+Nice=10
 NoNewPrivileges=yes
 CapabilityBoundingSet=
 PrivateTmp=yes
 ProtectHome=read-only
 ProtectSystem=strict
-ReadWritePaths=/home/ubuntu/x402-media-studio/data
+ReadWritePaths=/home/ubuntu/x402-media-studio/data/service
 UMask=0077
 MemoryMax=3G
 TasksMax=128

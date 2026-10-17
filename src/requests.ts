@@ -5,7 +5,7 @@ const hash=(value:string)=>createHash('sha256').update(value).digest('hex');
 export class Requests {
  private tail:Promise<unknown>=Promise.resolve();private rates=new Map<string,{count:number;until:number}>();
  constructor(private studio:Studio){}
- async init(){await mkdir(this.studio.path('requests'),{recursive:true})}
+ async init(){await mkdir(this.studio.path('requests'),{recursive:true});await mkdir(this.studio.path('limits'),{recursive:true})}
  private serial<T>(work:()=>Promise<T>):Promise<T>{const next=this.tail.then(work);this.tail=next.catch(()=>{});return next}
  async authenticate(handle:string|null){if(!handle||!/^[a-f0-9]{64}$/.test(handle))return;try{const session=await this.studio.read('requests',hash(handle));return Date.parse(session.expiresAt)>Date.now()?session:undefined}catch{return}}
  async create(ip:string){return this.serial(async()=>{
@@ -18,6 +18,7 @@ export class Requests {
   return {requestId:session.owner,requestHandle:handle,expiresAt:session.expiresAt,limits:{uploads:1,quotes:4,maxUploadBytes:104857600},next:'Use X-Request-Handle for this request’s upload, quote, polling and artifact calls. No API key or signup.'};
  })}
  async consume(session:any,kind:'uploads'|'quotes'){return this.serial(async()=>{const current=await this.studio.read('requests',session.id);if(Date.parse(current.expiresAt)<=Date.now())throw Error('Request handle expired');if(current[kind]>=(kind==='uploads'?1:4))throw Error('This request has reached its '+kind+' limit');current[kind]++;await this.studio.save('requests',current.id,current)})}
+ async admitFree(owner:string,quoteId:string){if(!owner.startsWith('request-'))return;return this.serial(async()=>{try{await this.studio.read('limits','free-'+quoteId);return}catch(e:any){if(e.code!=='ENOENT')throw e}const files=(await readdir(this.studio.path('requests'))).filter(f=>f.endsWith('.json'));let session:any;for(const f of files){const r=await this.studio.read('requests',f.slice(0,-5));if(r.owner===owner){session=r;break}}if(!session||Date.parse(session.expiresAt)<=Date.now()||(session.executions||0)>=1)throw Object.assign(Error('Free demo allows one job per request'),{status:429});const hour='hour-'+new Date().toISOString().slice(0,13).replace(/[^0-9]/g,'');let usage={count:0};try{usage=await this.studio.read('limits',hour)}catch(e:any){if(e.code!=='ENOENT')throw e}if(usage.count>=12)throw Object.assign(Error('Free demo hourly capacity reached; retry next hour'),{status:429});session.executions=(session.executions||0)+1;usage.count++;await this.studio.save('limits','free-'+quoteId,{owner,quoteId});await this.studio.save('limits',hour,usage);await this.studio.save('requests',session.id,session)})}
  private async expire(session:any){
   const quotes=[];for(const file of (await readdir(this.studio.path('quotes'))).filter(f=>f.endsWith('.json'))){const q=await this.studio.read('quotes',file.slice(0,-5));if(q.owner===session.owner)quotes.push(q)}
   for(const q of quotes){try{await this.studio.read('payments',q.id);return}catch(e:any){if(e.code!=='ENOENT')throw e}}

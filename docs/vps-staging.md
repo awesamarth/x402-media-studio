@@ -13,3 +13,15 @@ Caddy remains active for flappy-bird.awesamarth.dev only. Original configuration
 Authoritative DNS: Cloudflare, gordon.ns.cloudflare.com and heather.ns.cloudflare.com. Existing Flappy Bird and SSH target80.225.204.42. User-facing proposed record: A, x402-media-studio, 80.225.204.42, TTL Auto, DNS only. Domain publication still requires DNS and activation approval.
 
 Exact pending approval bundle: [deploy/approval-scope.md](../deploy/approval-scope.md). Public native downloader integration and its actual enforcement/retrieval check remain to implement/verify after permission; the working direct local-caption helper has not been represented as verified public server retrieval.
+
+## Current running app
+
+The existing ubuntu user now runs x402-media-studio.service through the user manager on127.0.0.1:8787. BILLING_MODE remains free; PUBLIC_FREE_DEMO enables automatically issued request handles, one execution per request and twelve executions/hour globally. No API key, new account, customer-token file, global firewall/DNS/SSH change or real payment was introduced. Caddy has not been reloaded or given the new route.
+
+Actual current native HTTP run passed all seven operations in17.9s and returned18 artifacts; missing handle401, another request's handle404, same purchase retry returned the same job. Report: docs/vps-keyless-free-report.json. No private user recording was uploaded.
+
+URL diagnosis: direct public JFK fetch succeeded. Both curl and yt-dlp initially timed out through the enforcing relay; a later verbose curl relay run completed CONNECT, TLS and HTTP200. This indicates intermittent behavior rather than a proven permanent relay block; no network identity was changed. Native user-namespace creation failed writing uid_map with Operation not permitted; no sudo bypass or OS-policy change was attempted. Direct normal installed yt-dlp on the VPS got YouTube's “Sign in to confirm you're not a bot” response. No cookies/retries/workaround followed. Server URL imports return503 before quote/payment while the isolated Linux runner is unconfigured; file/caption uploads and all seven processing operations work.
+
+Minimal next public action: append the already prepared x402-media-studio.awesamarth.dev Caddy block, validate the combined config, reload Caddy once, then verify both hostnames. Existing Flappy Bird block stays byte-for-byte intact. No extra service-account/token/network-hardening bundle is requested.
+
+The temporary user-manager unit was replaced with a single normal system service /etc/systemd/system/x402-media-studio.service, running as the existing ubuntu user and enabled at boot. No new accounts or login/linger policy changes were made. It binds127.0.0.1:8787, uses data/service, and reports freeDemo true, paymentConfigured false, urlImports false. A post-install anonymous request returned201 with an automatic scoped handle (not printed), confirming writable state. Root info and health return200. Caddy active config hash remains unchanged and Flappy Bird remainsHTTP200.

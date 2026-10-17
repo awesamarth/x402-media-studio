@@ -1,0 +1,24 @@
+{
+  "mode": "free",
+  "apiKeyUsed": false,
+  "elapsedSeconds": 17.9,
+  "operations": [
+    "clip",
+    "normalize",
+    "convert",
+    "transcribe",
+    "localize",
+    "repair_subtitles",
+    "frames"
+  ],
+  "status": "succeeded",
+  "jobId": "18352162de4cc8279af5812067da692e78da8c36ddbe05b1ba6c0ad1fd3484eb",
+  "artifacts": 18,
+  "noHandleStatus": 401,
+  "otherHandleStatus": 404,
+  "frameBytes": 17985,
+  "frameSha256": "a889ec6d3f7e81710d8c62568a986cf9e6d3ca5c0227a4af6cc1482cc41cc432",
+  "retryStatus": 202,
+  "retrySameJob": true,
+  "reportScope": "real native VPS HTTP requests and all-seven media processing; no payment or customer key"
+}
