@@ -1,7 +1,7 @@
 import * as z from "zod/v4";
 import { proposeX402 } from "./paybox.js";
 export function apiBase() {
-  const value = process.env.MEDIA_API_URL;
+  const value = process.env.MEDIA_API_URL || "https://x402-media-studio.awesamarth.dev";
   if (!value) throw new Error("Configure MEDIA_API_URL with the deployed media API HTTPS origin.");
   const url = new URL(value);
   if (url.protocol !== "https:" || url.port && url.port !== "443" || url.username || url.password || url.search || url.hash || url.pathname !== "/") {
