@@ -7,3 +7,9 @@
 5. PayBox portal: after deployment, set MEDIA_API_URL, allow its exact HTTPS hostname, upload adapter/dist/plugin.mjs, run hosted checks and submit before the deadline. No portal upload or submission occurred. Local protocol checks do not establish hosted networking or successful payment.
 
 No separate frontend is needed. The local demo and core tests can be run now without any of these choices.
+
+## Optional local dependency path
+
+Candidate integrations to evaluate after launch language/model choices: [whisper.cpp CLI](https://github.com/ggml-org/whisper.cpp) for local transcription, [Tesseract CLI](https://tesseract-ocr.github.io/tessdoc/Command-Line-Usage.html) for OCR, and [Argos Translate](https://github.com/argosopentech/argos-translate) for explicitly installed language pairs. These integrations are not installed or implemented in this milestone. Verify installed CLI flags, model licenses and representative output before advertising support. No model downloads are required from the user now.
+
+Payment/auth design decision: backend data calls now require a single-owner bearer token (host-scoped PayBox brokered header). PayBox x402 purchase requests cannot carry custom credential headers. A production paid enqueue must authenticate through verified settlement and bind the receipt to an immutable quote and idempotency key; never expose the development enqueue endpoint as a payment bypass. Real challenge/settlement and receipt replay protection remain implementation work. Current tests prove that unpaid and forged receipt requests fail closed, not that real receipts can be verified.
