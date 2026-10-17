@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-17",
+  "separateMcp": {
+    "rollbackCommit": "7114dd1",
+    "connectionCreated": false,
+    "formCancelled": true,
+    "publicRouteRemoved": true
+  },
+  "plugin": {
+    "bytes": 401443,
+    "sha256": "d32e79c6e6a658893e63348b6ee795a28909f53d7ef9de0c0adba820efce316d",
+    "tools": 9,
+    "node24Conformance": "passed",
+    "desktopCopy": "/Users/awesamarth/Desktop/plugin.mjs",
+    "portalDraftUploaded": true,
+    "portalChecks": "passed",
+    "portalInspectAsset": {
+      "status": "succeeded",
+      "durationMs": 4509,
+      "liveMode": "paid",
+      "paymentConfigured": true
+    },
+    "hackathonSubmitted": false,
+    "termsAccepted": false
+  },
+  "sevenOperations": {
+    "report": "readiness-all-seven.json",
+    "coldMs": 17003,
+    "cachedMs": 104,
+    "allCacheHits": true
+  },
+  "alliance": {
+    "durationSeconds": 58.676825,
+    "mode": "temporary free local API",
+    "result": "succeeded",
+    "outputs": "outputs/try-file/2026-10-17T17-52-06-252Z-c0fc6aaf/",
+    "paymentAttempted": false
+  },
+  "ytDlp": {
+    "cli": "2026.08.19",
+    "node": "24.18.0",
+    "ejs": "0.8.0",
+    "localArm64ImageBuilt": true,
+    "imageConfigSha256": "507dd895ab15f059dd7959e38e711158e1a3ad6609fc275ff69d98711b1ba052",
+    "productionPlatformExtraction": false,
+    "blockers": [
+      "isolated Linux runner not provisioned; Docker absent on VPS",
+      "prior YouTube sign-in/bot-check; no bypass attempted"
+    ]
+  },
+  "attachmentTransport": "No documented native forwarding in current PayBox contract; raw uploads require actual file bytes plus HTTP capability, URL imports require supported accessible HTTPS media URL."
+}
