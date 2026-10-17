@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-17",
+  "interface": "PayBox developer portal in local Brave via computer use",
+  "allowedHost": "x402-media-studio.awesamarth.dev",
+  "checks": "passed, 9 tools",
+  "source": "https://raw.githubusercontent.com/ggml-org/whisper.cpp/v1.9.4/samples/jfk.wav",
+  "quoteId": "0e5730ad-c282-4249-b2ce-6bfb423ec3cc",
+  "jobId": "d5a99cd59d1150289d1a3ca80f53241964ab0719d64f34c31d40ddbbc2b6949d",
+  "calls": {
+    "create_request": {
+      "status": "Test succeeded",
+      "ms": 4362
+    },
+    "quote_workflow": {
+      "status": "Test succeeded",
+      "ms": 4248,
+      "mode": "free",
+      "amountAtomic": "0"
+    },
+    "purchase_workflow": {
+      "status": "Test succeeded",
+      "ms": 5085,
+      "paymentStatus": "not_required"
+    },
+    "get_purchase": {
+      "status": "Test succeeded",
+      "ms": 4101
+    },
+    "get_job": {
+      "status": "Test succeeded",
+      "ms": 4597,
+      "artifacts": [
+        "0.transcript.srt",
+        "0.transcript.vtt",
+        "0.transcript.json"
+      ],
+      "cacheHit": true
+    },
+    "read_artifact": {
+      "status": "Test succeeded",
+      "ms": 4315,
+      "name": "0.transcript.srt",
+      "bytes": 142,
+      "encoding": "base64"
+    }
+  },
+  "transcript": "And so my fellow Americans, ask not what your country can do for you, ask what you can do for your country.",
+  "paymentPerformed": false,
+  "termsAccepted": false,
+  "projectSubmitted": false,
+  "privateRequestHandleRecorded": false
+}
