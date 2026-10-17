@@ -1,4 +1,3 @@
-import {nativeMcp} from './native-mcp';
 import {openapi,guide,docsHtml} from './public-docs';
 import {Retention,RETENTION_MS} from './retention';
 import {isDirectFileSource} from './direct-file';
@@ -17,15 +16,8 @@ const accounts=loadAccounts();const requests=new Requests(studio);await requests
 const imports=new Imports(studio);await imports.init();
 const retention=new Retention(studio,()=>imports.running);await retention.init();
 let receivingUpload=false;
-await (await import('node:fs/promises')).mkdir(studio.path('native-inputs'),{recursive:true});
 const json=(v:unknown,status=200)=>Response.json(v,{status});
 const httpServer:Bun.Server<undefined>=Bun.serve({hostname:process.env.HOST||'127.0.0.1',port:Number(process.env.PORT||8787),maxRequestBodySize:MAX_UPLOAD_BYTES,async fetch(req){return studio.access(async()=>{const u=new URL(req.url);const p=u.pathname.split('/').filter(Boolean);const session=mode==='paid'||freeDemo?await requests.authenticate(req.headers.get('X-Request-Handle')):undefined;const owner=session?.owner||principal(req.headers.get('authorization'),accounts);try{
- if(u.pathname==='/mcp'){
- const origin=req.headers.get('origin');if(origin&&!['https://chatgpt.com','https://chat.openai.com',config?.origin].includes(origin))return json({error:'Origin not allowed'},403);
- if(req.method==='POST'&&Number(req.headers.get('content-length')||0)>65536)return json({error:'MCP request too large'},413);
- let mcpRequest=req;if(req.method==='POST'){const reader=req.body?.getReader();const chunks:Uint8Array[]=[];let size=0;if(reader)while(true){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>65536){await reader.cancel();return json({error:'MCP request too large'},413)}chunks.push(part.value)}mcpRequest=new Request(req,{body:Buffer.concat(chunks)});}
- const handler=nativeMcp({studio,origin:config?.origin||'https://x402-media-studio.awesamarth.dev',create:()=>requests.create(httpServer.requestIP(req)?.address||'unknown'),authenticate:h=>requests.authenticate(h),consume:(s,k)=>requests.consume(s,k)});return handler.fetch(mcpRequest);
- }
  if(req.method==='GET'&&u.pathname==='/openapi.json')return json(openapi);
  if(req.method==='GET'&&u.pathname==='/llms.txt')return new Response(guide,{headers:{'Content-Type':'text/plain; charset=utf-8'}});
  if(req.method==='GET'&&u.pathname==='/docs')return new Response(docsHtml,{headers:{'Content-Type':'text/html; charset=utf-8','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'"}});
