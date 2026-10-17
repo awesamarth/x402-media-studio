@@ -1,0 +1,61 @@
+{
+  "scope": "Finished artifact delivery only; terminal verified, ChatGPT presentation pending Mac unlock",
+  "productionExistingJob": "73edfaba0eda9c584a6bcd00182a75c655649e05b67bc1ae1fd7e33c5937d011",
+  "productionDownloads": [
+    {
+      "filename": "0.transcript.srt",
+      "mimeType": "application/x-subrip",
+      "bytes": 142,
+      "httpStatus": 200,
+      "matchedStoredBytes": true
+    },
+    {
+      "filename": "0.transcript.vtt",
+      "mimeType": "text/vtt",
+      "bytes": 148,
+      "httpStatus": 200,
+      "matchedStoredBytes": true
+    },
+    {
+      "filename": "0.transcript.json",
+      "mimeType": "application/json",
+      "bytes": 670,
+      "httpStatus": 200,
+      "matchedStoredBytes": true
+    },
+    {
+      "filename": "1.srt",
+      "mimeType": "application/x-subrip",
+      "bytes": 162,
+      "httpStatus": 200,
+      "matchedStoredBytes": true
+    },
+    {
+      "filename": "1.translation.json",
+      "mimeType": "application/json",
+      "bytes": 209,
+      "httpStatus": 200,
+      "matchedStoredBytes": true
+    }
+  ],
+  "noRequestHeaderNeeded": true,
+  "expiryBound": "At most 15 minutes and no later than job expiry",
+  "productionLinksCappedAt": "2026-10-17T18:36:23.000Z",
+  "tamperedTokenStatus": 403,
+  "differentArtifactStatus": 403,
+  "expiredLinkStatus": 403,
+  "signingKeyMode": "0600",
+  "videoCheck": {
+    "source": "Existing generated Alliance clip copied into disposable local HTTP job fixture; no new processing/upload",
+    "filename": "alliance-clip.mp4",
+    "mimeType": "video/mp4",
+    "bytes": 1590774,
+    "jobMetadataStatus": 200,
+    "downloadStatus": 200,
+    "linkLifetimeSeconds": 900,
+    "matchedStoredBytes": true,
+    "privateJobWithoutAuthStatus": 401
+  },
+  "paymentAttempted": false,
+  "nativeChatAttachmentDeliveryProven": false
+}

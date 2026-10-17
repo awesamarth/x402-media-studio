@@ -7,15 +7,15 @@
     "platform": "linux",
     "arch": "arm64"
   },
-  "durationMs": 865,
+  "durationMs": 891,
   "status": "passed",
   "sampleCall": {
     "tool": "inspect_asset",
     "status": "passed"
   },
   "artifact": {
-    "bytes": 401443,
-    "sha256": "d32e79c6e6a658893e63348b6ee795a28909f53d7ef9de0c0adba820efce316d"
+    "bytes": 401859,
+    "sha256": "1d522e8deba4fe4aa7e6243cd5e494996d6e2990ce1da7cbbe25e78d93a62ebe"
   },
   "discoveredToolCount": 9
 }

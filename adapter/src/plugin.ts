@@ -44,11 +44,11 @@ function createServer() {
     inputSchema: z.object({ quoteId: id,requestHandle:handle }).strict(), outputSchema: output, annotations:{...annotations,readOnlyHint:false},
   }, async ({quoteId,requestHandle}) => result(await api(`/quotes/${quoteId}`,undefined,requestHandle)));
   server.registerTool("get_job", {
-    title: "Get workflow job", description: "Read owned job status and artifact paths after get_purchase returns a job ID. Download large media artifacts outside the plugin.",
+    title: "Get workflow job", description: "Read owned job status and artifact paths after get_purchase returns a job ID. For succeeded jobs, artifacts include filename, mimeType, downloadUrl and downloadExpiresAt. Present each downloadUrl as a Markdown link labeled with its filename so the user can click/download without request headers. Links grant read access only to that artifact for at most 15 minutes and never beyond file expiry; keep them private. Poll get_job again to refresh expired links while files remain available.",
     inputSchema: z.object({ jobId: id,requestHandle:handle }).strict(), outputSchema: output, annotations,
   }, async ({ jobId,requestHandle }) => result(await api(`/jobs/${jobId}`,undefined,requestHandle)));
   server.registerTool("read_artifact", {
-    title: "Read a small workflow artifact", description: "Read an owned artifact up to 48 KiB as base64 with this request’s automatically issued handle. Larger media uses the authenticated downloadPath returned by get_job; never put bearer tokens in URLs.",
+    title: "Read a small workflow artifact", description: "Read an owned artifact up to 48 KiB as base64 with this request’s automatically issued handle. For clickable downloads of any size use get_job artifact.downloadUrl (a short-lived single-artifact capability). Never put the private requestHandle in a URL.",
     inputSchema: z.object({ jobId: id, name: z.string().regex(/^[a-zA-Z0-9_.-]{1,100}$/),requestHandle:handle }).strict(), outputSchema: output, annotations,
   }, async ({jobId,name,requestHandle}) => result(await api(`/jobs/${jobId}/artifacts/${name}?inline=base64`,undefined,requestHandle)));
   return server;

@@ -62,7 +62,8 @@ Subtitle options: `format: srt|vtt`, `overlap: error|trim|preserve`, `sort: bool
 | POST /quotes | Validate immutable `{assetId,steps}` under account ownership |
 | GET /quotes/:id | Owned quote/purchase status and eventual job ID; resumes owed settled enqueue |
 | POST /workflows | Real authenticated free enqueue, or public x402 purchase in paid mode |
-| GET /jobs/:id | Owned status, errors, attempts, artifact names/cache metrics/downloadPath |
+| GET /jobs/:id | Owned status, errors, attempts; artifact filename/MIME/bytes and short-lived browser download URL |
+| GET /downloads/:jobId/:name?expires=...&token=... | Short-lived single-artifact download, no custom header; issued by owned job status |
 | GET /jobs/:id/artifacts/:name | Owned artifact download; optional `?inline=base64` limited to 48 KiB |
 
 Free mode uses `{quoteId,idempotencyKey}` with account authentication. `purchase_workflow` discovers `mode: free` and starts that real job; it never proposes a zero-amount payment. Use `get_purchase`, then `get_job`, then authenticated downloads or bounded `read_artifact`. The retired `/dev/workflows` route cannot bypass billing.

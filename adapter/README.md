@@ -27,7 +27,7 @@ There is no deployed origin yet, so there is no real hostname to allowlist. Paym
 
 API calls reject redirects, time out after 6.5 seconds, and reject JSON responses larger than 1 MiB. The hosted sandbox has a 10-second total limit including startup, so long-running work stays in the backend worker. Each call starts fresh; job and quote state live on the backend.
 
-`get_job` returns private relative downloadPath values. `read_artifact` returns artifacts up to 48 KiB as base64 through the scoped request handle; larger media requires the direct authenticated download route. No bearer secret appears in URLs or tool text. Payment enablement remains off pending real facilitator/deployment verification; see ../docs/payment-binding.md for the ownership and transfer-authorization boundary.
+`get_job` returns filenames, MIME types, byte sizes and short-lived `downloadUrl` links for succeeded artifacts. Present those URLs as Markdown links labeled by filename; browsers need no custom headers. Each URL grants read-only access to exactly one artifact for at most 15 minutes and never beyond job retention. Keep capability links private; refresh by calling the owned job again while files remain available. The request handle never appears in these URLs. Original authenticated `downloadPath` remains supported, and `read_artifact` still returns small files up to 48 KiB as base64. See ../docs/payment-binding.md for payment ownership boundaries.
 
 ## Already-settled purchase recovery
 
