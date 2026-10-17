@@ -9,7 +9,7 @@ const id = z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/);
 const output = z.object({ data: z.json() }).strict();
 const steps = z.array(z.object({
   type: z.enum(["transcribe", "localize", "clip", "frames", "repair_subtitles", "convert", "normalize"]),
-}).catchall(z.json())).min(1).max(12);
+}).catchall(z.json())).min(1).max(8);
 const annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true };
 
 function createServer() {

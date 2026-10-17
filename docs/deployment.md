@@ -17,3 +17,7 @@ Production blockers: payment verification/settlement, receiving wallet, facilita
 ## After deployment approval
 
 Install FFmpeg through the VPS operating system package manager (the Ubuntu/Debian `ffmpeg` package supplies both `ffmpeg` and `ffprobe`); no manual binary download is needed. Verify both versions and codec support before starting the isolated worker. This package installation has not been performed.
+
+## Local engine implementation now complete
+
+The Mac now has verified real whisper.cpp base transcription, English Tesseract OCR and direct English→Spanish CTranslate2 translation. All seven operations, chaining and caches pass real local fixtures. The later VPS setup is documented in local-runtime.md and automated by `bun run setup:local` after OS prerequisites/Bun/uv are installed. Linux ARM64 Python wheels resolve from a hashed lock, but actual VPS inference/build/latency remains to verify. Keep BILLING_MODE=free. No installation, configuration or service mutation has been performed on oracle-vps.

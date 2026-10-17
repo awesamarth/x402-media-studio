@@ -1,3 +1,4 @@
+import {aiCapabilities} from './local-ai';
 import {loadAccounts,principal} from './accounts';
 import {Payments,paymentConfig,billingMode} from './payments';
 import {createHash} from 'node:crypto';
@@ -8,7 +9,7 @@ const accounts=loadAccounts();
 let receivingUpload=false;
 const json=(v:unknown,status=200)=>Response.json(v,{status});
 Bun.serve({hostname:process.env.HOST||'127.0.0.1',port:Number(process.env.PORT||8787),maxRequestBodySize:50*1024*1024,async fetch(req){const u=new URL(req.url);const p=u.pathname.split('/').filter(Boolean);const owner=principal(req.headers.get('authorization'),accounts);try{
- if(u.pathname==='/health')return json({ok:true,mode,paymentConfigured:Boolean(config),capabilities:{clip:true,frames:true,convert:true,normalize:true,repair_subtitles:'SRT/VTT validation, reflow and explicit overlap handling',transcribe:false,localize:false,ocr:false}});
+ if(u.pathname==='/health')return json({ok:true,mode,paymentConfigured:Boolean(config),capabilities:{clip:true,frames:true,convert:true,normalize:true,repair_subtitles:'SRT/VTT validation, reflow and explicit overlap handling',...await aiCapabilities()}});
  if(!(u.pathname==='/workflows'&&mode==='paid') && !owner)return json({error:'Configure LOCAL_DEV_TOKEN and provide its Bearer token'},401);
  if(req.method==='POST'&&u.pathname==='/assets'){if(receivingUpload)return json({error:'One upload at a time; retry later'},429);receivingUpload=true;try{return json(await studio.upload(new Uint8Array(await req.arrayBuffer()),owner),201)}finally{receivingUpload=false}}
  if(req.method==='GET'&&p[0]==='assets'&&p.length===2)return json(await studio.asset(p[1]!,owner!));

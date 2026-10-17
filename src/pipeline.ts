@@ -1,0 +1,70 @@
+import {createHash,randomUUID} from 'node:crypto';
+import {createReadStream} from 'node:fs';
+import {copyFile,mkdir,readFile,readdir,rename,stat,writeFile,rm} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import type {Step,Workflow} from './core';
+import {command} from './process';
+import {localAI,localTranslation} from './local-ai';
+import {repairSubtitles,stamp,type Cue} from './subtitles';
+const fingerprintMemo=new Map<string,string>();
+export async function fileHash(path:string){const h=createHash('sha256');for await(const chunk of createReadStream(path))h.update(chunk);return h.digest('hex')}
+async function fingerprint(path:string):Promise<string>{const info=await stat(path);const key=path+':'+info.size+':'+info.mtimeMs;if(!info.isDirectory()&&fingerprintMemo.has(key))return fingerprintMemo.get(key)!;let value:string;if(info.isDirectory()){const parts=[];for(const name of (await readdir(path)).sort())parts.push(name+':'+await fingerprint(join(path,name)));value=createHash('sha256').update(parts.join('|')).digest('hex')}else value=await fileHash(path);if(!info.isDirectory())fingerprintMemo.set(key,value);return value}
+const protocols=['-protocol_whitelist','file,pipe','-format_whitelist','mov,matroska,webm,mp3,wav,ogg,flac,aac,image2'];
+async function probe(path:string){return JSON.parse(await command(['ffprobe',...protocols,'-v','quiet','-show_format','-show_streams','-of','json',path]))}
+function subtitles(cues:Cue[]){return cues.map((c,i)=>`${i+1}\n${stamp(c.start,false)} --> ${stamp(c.end,false)}\n${c.text}`).join('\n\n')+'\n'}
+export function ocrWords(tsv:string){const lines=tsv.trim().split('\n');if(!lines[0]?.startsWith('level\tpage_num'))throw Error('OCR did not return TSV');return lines.slice(1).map(line=>{const p=line.split('\t');return {text:p.slice(11).join('\t').trim(),confidence:Number(p[10]),box:{left:Number(p[6]),top:Number(p[7]),width:Number(p[8]),height:Number(p[9])}}}).filter(w=>w.text&&Number.isFinite(w.confidence)&&w.confidence>=0&&Object.values(w.box).every(n=>Number.isFinite(n)&&n>=0))}
+export async function runWorkflow(root:string,id:string,w:Workflow,checkStorage:()=>Promise<void>){
+ const dir=join(root,'jobs',id);await mkdir(dir,{recursive:true});await mkdir(join(root,'cache'),{recursive:true});let input=join(root,'assets',w.assetId);let lastSubtitle:string|undefined;let subtitleLanguage:string|undefined;const artifacts:any[]=[];
+ for(const [i,step] of w.steps.entries()){
+  await checkStorage();const started=performance.now();const sourceText=step.text??(lastSubtitle?await readFile(lastSubtitle,'utf8'):undefined);const dependencies=[await fingerprint(Bun.which('ffmpeg')!),await fingerprint(resolve('src/pipeline.ts')),await fingerprint(resolve('src/subtitles.ts'))];
+  if(step.type==='transcribe'){const ai=await localAI('transcribe');dependencies.push(await fingerprint(ai.binary),await fingerprint(ai.model!))}
+  if(step.type==='frames'&&step.ocr){const ai=await localAI('ocr');dependencies.push(await fingerprint(ai.binary),await fingerprint(ai.model!))}
+  if(step.type==='localize'&&step.text===undefined&&subtitleLanguage&&subtitleLanguage!==(step.from||'en'))throw Error('Detected caption language does not match requested translation source');
+  if(step.type==='localize'){const ai=await localTranslation();dependencies.push(await fingerprint(ai.python),await fingerprint(ai.script),await fingerprint(ai.model))}
+  const key=createHash('sha256').update(JSON.stringify({version:3,index:i,media:await fileHash(input),step,text:sourceText,dependencies})).digest('hex');const cache=join(root,'cache',key);let result:{names:string[];media?:string;subtitle?:string;language?:string};let hit=false;
+  try{result=JSON.parse(await readFile(join(cache,'entry.json'),'utf8'));if(!Array.isArray(result.names)||result.names.some(name=>!/^\d+\.[a-zA-Z0-9_.-]{1,120}$/.test(name))||result.media&&!result.names.includes(result.media)||result.subtitle&&!result.names.includes(result.subtitle))throw Error('Invalid cache manifest');for(const name of result.names)await copyFile(join(cache,name),join(dir,name));hit=true}catch(error:any){if(error.code!=='ENOENT')throw error;result=await executeStep(dir,i,input,step,sourceText);await checkStorage();const temp=cache+'.'+randomUUID()+'.tmp';await mkdir(temp);try{for(const name of result.names)await copyFile(join(dir,name),join(temp,name));await writeFile(join(temp,'entry.json'),JSON.stringify(result));await rename(temp,cache)}catch(error:any){await rm(temp,{recursive:true,force:true});if(error.code!=='EEXIST'&&error.code!=='ENOTEMPTY')throw error}}
+  if(result.media){input=join(dir,result.media);if(step.type==='clip'||step.type==='normalize'){lastSubtitle=undefined;subtitleLanguage=undefined}}if(result.subtitle){lastSubtitle=join(dir,result.subtitle);subtitleLanguage=result.language||subtitleLanguage}for(const name of result.names)artifacts.push({name,step:i,cacheHit:hit,cacheKey:key,durationMs:Math.round(performance.now()-started)});await checkStorage();
+ }
+ return artifacts;
+}
+async function executeStep(dir:string,i:number,input:string,s:Step,sourceText?:string):Promise<{names:string[];media?:string;subtitle?:string;language?:string}>{
+ const out=(suffix:string)=>join(dir,`${i}.${suffix}`);const base=['ffmpeg','-nostdin','-hide_banner','-loglevel','error','-y','-filter_threads','1','-filter_complex_threads','1',...protocols,'-threads','1','-i',input];
+ if(s.type==='transcribe'){
+  const ai=await localAI('transcribe'),wav=out('wav');await command([...base,'-vn','-ac','1','-ar','16000','-c:a','pcm_s16le','-fs','60000000',wav]);
+  try{await command([ai.binary,'-m',ai.model!,'-f',wav,'-l',s.language||'en','-t','2','-ng','-oj','-osrt','-ovtt','-of',out('transcript')])}finally{await rm(wav,{force:true})}
+  const raw=JSON.parse(await readFile(out('transcript.json'),'utf8'));const parsed=repairSubtitles(await readFile(out('transcript.srt'),'utf8'),{overlap:'preserve'});repairSubtitles(await readFile(out('transcript.vtt'),'utf8'),{overlap:'preserve'});if(!Array.isArray(raw.transcription))throw Error('Whisper JSON has no transcription segments');
+  await writeFile(out('transcript.json'),JSON.stringify({engine:'whisper.cpp',language:raw.result?.language||s.language||'en',modelSha256:await fingerprint(ai.model!),segments:parsed.cues.map((c,n)=>({id:n+1,startSeconds:c.start/1000,endSeconds:c.end/1000,text:c.text})),sourceMediaSha256:await fileHash(input),timestampReference:'transcription input after preceding media operations',timestampScope:'segment estimates; not forced word alignment'},null,2));
+  return {names:[`${i}.transcript.srt`,`${i}.transcript.vtt`,`${i}.transcript.json`],subtitle:`${i}.transcript.srt`,language:raw.result?.language||s.language||'en'};
+ }
+ if(s.type==='localize'){
+  if(sourceText===undefined)throw Error('localize requires supplied captions or preceding subtitle/transcription step');const parsed=repairSubtitles(sourceText,{overlap:'preserve'});const ai=await localTranslation();
+  const response=JSON.parse(await command([ai.python,ai.script],{input:JSON.stringify({from:s.from||'en',to:s.to||'es',cues:parsed.cues.map((c,n)=>({id:n+1,text:c.text}))})}));
+  if(!Array.isArray(response.cues)||response.cues.length!==parsed.cues.length||response.cues.some((c:any,n:number)=>c.id!==n+1||typeof c.text!=='string'||!c.text.trim()))throw Error('Translation output changed cue IDs/count or omitted text');
+  const translated=parsed.cues.map((c,n)=>({...c,text:response.cues[n].text}));const repaired=repairSubtitles(subtitles(translated),{...s.options,overlap:s.options?.overlap||'preserve'});await writeFile(out(repaired.format),repaired.text);await writeFile(out('translation.json'),JSON.stringify({engine:response.engine||'Argos/CTranslate2',from:s.from||'en',to:s.to||'es',cueCount:translated.length,timestampsPreserved:true,warnings:repaired.warnings},null,2));return {names:[`${i}.${repaired.format}`,`${i}.translation.json`],subtitle:`${i}.${repaired.format}`,language:s.to||'es'};
+ }
+ if(s.type==='repair_subtitles'){
+  if(sourceText===undefined)throw Error('repair_subtitles requires supplied captions or a preceding subtitle step');const result=repairSubtitles(sourceText,s.options);await writeFile(out(result.format),result.text);await writeFile(out('warnings.json'),JSON.stringify({cueCount:result.cueCount,warnings:result.warnings},null,2));return {names:[`${i}.warnings.json`,`${i}.${result.format}`],subtitle:`${i}.${result.format}`};
+ }
+ if(s.type==='frames'){
+  const info=await probe(input);const duration=Number(info.format.duration);const times=s.atSeconds||[0];const names:string[]=[],frames:any[]=[];
+  for(const [n,time] of times.entries()){if(time>=duration)throw Error(`Frame timestamp ${time} exceeds media duration ${duration}`);const suffix=times.length===1?'jpg':`frame-${String(n).padStart(3,'0')}.jpg`;const name=`${i}.${suffix}`;await command([...base,'-ss',String(time),'-frames:v','1','-vf','scale=min(1280\\,iw):-2','-threads','1',out(suffix)]);names.push(name);const frameInfo=await probe(out(suffix));const video=frameInfo.streams.find((v:any)=>v.codec_type==='video');let ocr:any={status:'not_requested'};
+   if(s.ocr){const ai=await localAI('ocr');const prefix=`${i}.ocr-${String(n).padStart(3,'0')}`;await command([ai.binary,out(suffix),join(dir,prefix),'--tessdata-dir',process.env.TESSDATA_DIR!,'-l','eng','--psm','6','-c','tessedit_create_tsv=1']);const tsvName=prefix+'.tsv';const words=ocrWords(await readFile(join(dir,tsvName),'utf8'));ocr={status:'completed',language:'eng',text:words.map(w=>w.text).join(' '),words,tsv:tsvName};names.push(tsvName)}
+   frames.push({image:name,timestampSeconds:time,timestampBasis:'requested seek time; may differ by one frame',width:video.width,height:video.height,ocr});
+  }
+  await writeFile(out('manifest.json'),JSON.stringify({source:widenHash(input),sourceMediaSha256:await fileHash(input),timestampReference:'current media after preceding operations',frames,ocr:s.ocr?'completed':'not_requested'},null,2));names.push(`${i}.manifest.json`);return {names};
+ }
+ let args:string[]=[];
+ if(s.type==='clip')args=['-ss',String(s.start),'-t',String(s.duration),'-c:v','libx264','-preset','ultrafast','-c:a','aac','-fs','52428800'];
+ if(s.type==='normalize'){
+  const info=await probe(input),duration=Number(info.format.duration);const hasVideo=info.streams.some((v:any)=>v.codec_type==='video');if(!info.streams.some((v:any)=>v.codec_type==='audio'))throw Error('normalize requires an audio stream');
+  const log=await command(['ffmpeg','-nostdin','-hide_banner','-loglevel','info',...protocols,'-threads','1','-i',input,'-af','silencedetect=noise=-45dB:d=0.3','-f','null','-'],{returnStderr:true});
+  const silences:Array<{start:number;end:number}>=[];let start:number|undefined;for(const line of log.split('\n')){const a=/silence_start: ([\d.]+)/.exec(line),b=/silence_end: ([\d.]+)/.exec(line);if(a)start=Number(a[1]);if(b&&start!==undefined){silences.push({start,end:Number(b[1])});start=undefined}}if(start!==undefined)silences.push({start,end:duration});
+  const keep:Array<{start:number;end:number}>=[];let cursor=0;for(const silence of silences){const before=Math.min(duration,silence.start+0.05);if(before-cursor>0.08)keep.push({start:cursor,end:before});cursor=Math.max(cursor,silence.end-0.05)}if(duration-cursor>0.08)keep.push({start:cursor,end:duration});if(!keep.length)throw Error('No nonsilent audio remains');if(keep.length>32)throw Error('Too many silence segments; split media first');
+  let filters='',inputs='';for(const [n,k] of keep.entries()){if(hasVideo)filters+=`[0:v]trim=start=${k.start}:end=${k.end},setpts=PTS-STARTPTS[v${n}];`;filters+=`[0:a]atrim=start=${k.start}:end=${k.end},asetpts=PTS-STARTPTS[a${n}];`;inputs+=(hasVideo?`[v${n}]`:'')+`[a${n}]`}
+  filters+=`${inputs}concat=n=${keep.length}:v=${hasVideo?1:0}:a=1${hasVideo?'[video]':''}[audio];[audio]loudnorm=I=-16:TP=-1.5:LRA=11[normalized]`;
+  await command([...base,'-filter_complex',filters,...(hasVideo?['-map','[video]','-c:v','libx264','-preset','ultrafast']:[]),'-map','[normalized]','-c:a','aac','-ar','48000','-threads','1','-fs','52428800',out('mp4')]);const outputInfo=await probe(out('mp4'));await writeFile(out('audio.json'),JSON.stringify({silenceThresholdDb:-45,minSilenceSeconds:0.3,paddingSeconds:0.05,inputDurationSeconds:duration,outputDurationSeconds:Number(outputInfo.format.duration),keptIntervals:keep,loudnessTargetLUFS:-16,timingWarning:'Audio and video are trimmed together; earlier captions are not automatically retimed. Transcribe after normalize.'},null,2));return {names:[`${i}.mp4`,`${i}.audio.json`],media:`${i}.mp4`};
+ }
+ if(s.type==='convert'){const info=await probe(input);const rate=Math.floor(s.targetBytes!*8/Number(info.format.duration)*0.9)-64000;if(rate<32000)throw Error('Target too small for duration');args=['-c:v','libx264','-preset','ultrafast','-b:v',String(rate),'-c:a','aac','-b:a','64000','-fs',String(s.targetBytes)]}
+ await command([...base,...args,'-threads','1',out('mp4')]);const info=await probe(out('mp4'));if(!Number.isFinite(Number(info.format.duration))||Number(info.format.duration)<=0)throw Error('Operation produced invalid media');if(s.type==='convert'&&Number(info.format.duration)<Number((await probe(input)).format.duration)-0.15)throw Error('Size budget truncated media; choose a larger target');if(s.type==='convert'&&(await stat(out('mp4'))).size>s.targetBytes!)throw Error('Conversion exceeded requested size');return {names:[`${i}.mp4`],media:`${i}.mp4`};
+}
+function widenHash(path:string){return path.split('/').pop()!}

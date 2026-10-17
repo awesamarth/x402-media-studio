@@ -1,0 +1,7 @@
+# Local model fixtures
+
+`jfk.wav` is copied unchanged from the checksum-verified official whisper.cpp v1.9.4 source archive (`samples/jfk.wav`): https://github.com/ggml-org/whisper.cpp/blob/v1.9.4/samples/jfk.wav . It is a short actual recording of John F. Kennedy's inaugural-address speech, not generated tones or mocked recognition. SHA256: `59dfb9a4acb36fe2a2affc14bacbee2920ff435cb13cc314a08c13f66ba7860e`; 352,078 bytes; approximately 11 seconds, mono PCM WAV. The public-domain US presidential speech is used as the upstream ASR test excerpt; attribution is retained here.
+
+The OCR fixture is created by `scripts/demo-local-ai.ts`: a white 1280×720 image/video carrying original text “HELLO WORLD” and “Media Studio OCR 2026”. FFmpeg renders it with the installed Arial font on Mac, or use DEMO_FONT to choose an installed Linux font. No stock image or expected OCR result is injected into the OCR engine. The video combines this generated visual with the unchanged speech content, then the real pipeline clips/normalizes/converts before recognition.
+
+The silence/loudness fixture in `tests/local-ai.test.ts` is generated locally from a known sine tone interrupted by measured silent intervals. It tests processing mechanics, not speech quality. Real-model tests additionally verify recognized words, cue-time preservation across translation, OCR boxes/confidence, and cache hits/invalidation.

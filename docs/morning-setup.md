@@ -1,27 +1,19 @@
-# Morning setup
+# Morning checkpoint
 
-The application is FREE by default. Start with a deliberately configured local bearer token and `bun start`; no receiving wallet, facilitator or paid provider is needed for FFmpeg/subtitle workflows. `bun run demo` runs the free synthetic core pipeline. The actual bundled adapter integration also executes a free FFmpeg clip plus subtitle workflow and reads the resulting artifact.
+The local implementation now executes all seven operations, including installed real speech recognition, English→Spanish translation, English OCR, chained outputs and reusable step/transcript caches. Billing remains FREE. No model/provider choice is required to test the existing English→Spanish path.
 
-Use BILLING_MODE=free|paid as the only billing switch. Free mode uses authenticated POST /workflows and never calls a facilitator. Paid mode requires complete valid settings and fails startup if incomplete; it never falls back to free on an error. PAYMENTS_ENABLED and ACCOUNT_PAYER are obsolete and ignored.
+Run:
 
-## Needed for morning testing
+```sh
+bun run demo:ai
+bun run test:ai
+bun --env-file=.env.local test
+```
 
-1. Choose the account credential configuration through your normal secret process. LOCAL_DEV_TOKEN supplies a single local-owner development principal; API_ACCOUNTS_JSON supplies distinct static account principals for customer isolation. No real credentials were created, selected or searched. In PayBox, broker the account bearer header to the exact API host.
-2. Choose hostname and approve isolated deployment when ready. No DNS, server, Caddy, firewall or deployment changes were made. The VPS still needs OS-package FFmpeg/ffprobe and Bun setup; no manual binary download is needed from you. See deployment.md.
-3. For speech/OCR, choose whether to install local whisper.cpp/model and Tesseract/English trained data. Adapters are implemented but actual recognition/OCR is unverified. No models were downloaded. Localization remains unimplemented; choose launch languages/provider later. No paid usage was authorized.
+Model paths are already configured in ignored `.env.local`. No account credentials were created or selected. For API/PayBox testing, supply an account bearer secret through your normal process; `LOCAL_DEV_TOKEN` is the development account, while `API_ACCOUNTS_JSON` supplies distinct stable principals. [Exact existing demo artifacts](demo-outputs.md) are ready to inspect.
 
-## Only when switching to paid
+Remaining work is deployment/configuration rather than installing more local engines: approve the isolated VPS service/hostname, install/rebuild there using [the setup guide](local-runtime.md), configure account secret and data/retention/resource policy, run Linux ARM64 inference and benchmark, then configure exact PayBox HTTPS host/brokered header and hosted checks. The original VPS website, Caddy/DNS and Pebble remain untouched. No push, upload or submission occurred.
 
-Provide a public receiving address and choose a trusted facilitator with the documented x402 v2 verify/settle API. Configure PAYMENT_NETWORK=eip155:8453, PAYMENT_RECIPIENT, PAYMENT_FACILITATOR and PUBLIC_API_ORIGIN, along with account authentication, then explicitly choose BILLING_MODE=paid. Check real facilitator compatibility and PayBox hosted validation before public paid use. No private key is required.
+Keep BILLING_MODE=free for testing. Only when deliberately enabling paid mode, configure receiving address, compatible facilitator, Base network/public origin and verify live compatibility. No wallet/private key is needed for local free tests. All settlement tests use fabricated signatures and a mock facilitator. Known-settled enqueue recovery works after expiry without another charge; ambiguous settlement still requires operator reconciliation.
 
-The exact EVM authorization signs transfer fields, not the workflow body. A payer funding another own equal-price quote is order interchangeability. Cross-account abuse additionally assumes authorization theft or deceptive approval. Account ownership does not move with payment; only the quote owner can read outputs. See payment-binding.md for the corrected boundary. No custom signing or wallet onboarding is required by this implementation.
-
-Ambiguous settlement remains pending without another charge. Facilitator-specific reconciliation is manual; no automatic transaction-query/admin recovery API exists. Preserve payment/nonce records and run one backend process only. Self-service account onboarding and multi-process database coordination are future work.
-
-## Evidence
-
-`bun test`: 18 passing tests at the latest checkpoint; focused fixtures include two-account isolation, concurrent payment reuse, invalid/failed/unknown settlement, free-default/paid-fail-closed modes and real media outputs. No real wallet or facilitator call occurred.
-
-Default Node22 fails official conformance as expected. Existing Node24.12.0 passes the exact command documented in verification.md. Loopback tests and adapter/backend integration required sandbox escalation. Adapter integration uses an explicit broker fetch shim, so it does not prove hosted TLS or real secret-broker behavior. Upload/submission and paid validation remain undone.
-
-Settled-purchase recovery is implemented: owner polling get_purchase retries enqueue after quote expiry without a proposal or another settlement. It reports awaiting_capacity separately from enqueue_failed; release queue/storage capacity and poll again. This is distinct from unknown settlement, which still needs operator reconciliation. The final focused fixture verifies one settlement and one job under concurrent recovery.
+Actual supported languages: English speech verified (Whisper `auto` is available but other languages unverified); English→Spanish translation only; English OCR. Adding other launch languages is optional future scope. Models are kept out of Git/plugin bundles; the Argos translation archive's absent explicit weight license is documented for any redistribution decision. No license for weights was invented from the code's license.
