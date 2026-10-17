@@ -37,3 +37,9 @@ The image builds on the existing local ARM64 Linux Docker engine. An actual netw
 Source scope remains narrow: direct upstream JFK WAV verified on macOS; YouTube page extraction unverified; W3 URLs unverified. Paid import remains disabled. The Python base image digest and yt-dlp version are pinned; Debian apt package versions are not fully reproducible. Record the resulting image digest after each approved build.
 
 Docker references: [none network](https://docs.docker.com/engine/network/drivers/none/), [resource constraints](https://docs.docker.com/engine/containers/resource_constraints/).
+
+## Current downloader wiring
+
+The importer explicitly passes `--js-runtimes node:/usr/local/bin/node`. macOS can override the absolute executable path with `YT_DLP_JS_RUNTIME`. The prepared Linux image copies Node 24.18.0 from the official Node image and installs yt-dlp default dependencies (including matching EJS). Image tags pin versions, not immutable Node image bytes. The production VPS still has platform extraction disabled because the isolated Linux runner has not been provisioned; installing a host CLI alone does not enable that runner. Existing direct-file acquisition remains enabled. Prior ordinary YouTube retrieval from Oracle returned an explicit sign-in/bot-check even with Node configured; this is an access restriction, not proof of missing downloader code. No cookies, alternate clients, proxies for changing egress, or restriction bypass are provided.
+
+Caption-only workflows already inspect metadata, select matching manual captions before automatic captions, then fall back to media plus Whisper only if no matching captions exist. Access denial and caption download errors stop without fallback. Duration, filesize, deadline, allowed-host proxy and no-network container bounds remain unchanged.

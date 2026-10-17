@@ -30,7 +30,9 @@ export async function download(url:string,media:'audio'|'video',dir:string,steps
  const proxy=await startImportProxy(proxyDir?{socketPath:join(proxyDir,'proxy.sock')}:{});
  const remoteDir=linux?'/work':dir;
  const policy=`(version 1)(allow default)(deny network-outbound)(allow network-outbound (remote tcp "localhost:${proxy.port}"))`;
- const common=['--ignore-config','--no-playlist','--socket-timeout','20','--retries','0','--fragment-retries','0','--extractor-retries','0','--concurrent-fragments','1','--proxy',`http://127.0.0.1:${linux?7777:proxy.port}`,'--max-filesize',String(MAX_UPLOAD_BYTES),'--limit-rate','2M','--no-progress','--restrict-filenames','--paths',remoteDir,'--paths',`temp:${remoteDir}`,'-o','source.%(ext)s'];
+ const jsRuntime=linux?'/usr/local/bin/node':(process.env.YT_DLP_JS_RUNTIME||'/usr/local/bin/node');
+ if(!jsRuntime.startsWith('/')||/[\r\n]/.test(jsRuntime))throw Error('YT_DLP_JS_RUNTIME must be an absolute Node executable path');
+ const common=['--js-runtimes','node:'+jsRuntime,'--ignore-config','--no-playlist','--socket-timeout','20','--retries','0','--fragment-retries','0','--extractor-retries','0','--concurrent-fragments','1','--proxy',`http://127.0.0.1:${linux?7777:proxy.port}`,'--max-filesize',String(MAX_UPLOAD_BYTES),'--limit-rate','2M','--no-progress','--restrict-filenames','--paths',remoteDir,'--paths',`temp:${remoteDir}`,'-o','source.%(ext)s'];
  async function run(args:string[]) {
   return await new Promise<string>((ok,fail)=>{
    const container=linux?linuxImportCommand(dir,proxyDir!,[...common,...args,'--',url]):undefined;

@@ -33,3 +33,11 @@ For transcription-only caption workflows the importer now prefers matching manua
 YouTube extraction may also tunnel to the exact public www.google.com host; it remains excluded from submitted URL frontends. Errors retain bounded diagnostic lines with all HTTP(S) URLs redacted, and list any proxy-denied hostnames. This distinguishes application host-policy failures from the observed upstream bot/authentication block.
 
 Public native-CLI integration plan and exact host authorization gap: [public-api-runner-plan.md](public-api-runner-plan.md). Server metadata now uses a bounded 12 MiB info file and normal CLI defaults; the enforcing relay remains until an alternative destination boundary is verified.
+
+## October 17 runtime verification
+
+The ordinary VPS CLI is yt-dlp 2026.08.19 with Node v24.18.0. An explicit `--js-runtimes node:/usr/local/bin/node` generic-extractor metadata call to the unrestricted upstream JFK WAV succeeded (`extractor=generic ext=wav`). The downloader implementation now passes this runtime selection itself; the prepared Linux image includes official Node 24.18.0 and yt-dlp default/EJS dependencies.
+
+An actual temporary loopback API on the VPS completed URL import -> running job -> succeeded -> downloaded SRT, VTT and JSON using the local small Whisper model. Output: `outputs/try-file/2026-10-17T17-34-36-163Z-ba34705b/`. This verifies the production-machine direct-file backend path, not the disabled Docker platform-extraction path. Production remains paid; the temporary API was free and stopped after completion. No real payment occurred.
+
+Linux platform extraction is still gated on a configured isolated runner. Docker is absent on oracle-vps; no daemon installation, privileged service-account access, namespace/security relaxation or alternate egress was performed. Prior YouTube sign-in/bot-check remains unresolved and was not retried. Installing yt-dlp does not imply YouTube access. Captions-first selection, fallback policy and strict acquisition bounds already exist in src/imports.ts.
