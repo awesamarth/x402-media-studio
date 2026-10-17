@@ -44,9 +44,13 @@
     "imageConfigSha256": "507dd895ab15f059dd7959e38e711158e1a3ad6609fc275ff69d98711b1ba052",
     "productionPlatformExtraction": false,
     "blockers": [
-      "isolated Linux runner not provisioned; Docker absent on VPS",
+      "platform URL activation left unchanged/disabled for separately owned YouTube work",
       "prior YouTube sign-in/bot-check; no bypass attempted"
-    ]
+    ],
+    "rootlessDockerVersion": "29.9.1",
+    "rootlessDaemon": "active and enabled",
+    "nativeRunnerVerified": true,
+    "protectedServiceRunnerMs": 3675
   },
   "attachmentTransport": "No documented native forwarding in current PayBox contract; raw uploads require actual file bytes plus HTTP capability, URL imports require supported accessible HTTPS media URL."
 }

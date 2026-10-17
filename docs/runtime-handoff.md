@@ -13,12 +13,16 @@ This handoff covers the normal isolated runtime only. YouTube-specific work is o
 - src/import-runner.ts explicitly selects the rootless local Unix socket and maps container UID0 to the daemon's unprivileged host owner. Existing network-none, read-only, capability-drop, no-new-privileges and resource limits remain.
 - src/imports.ts stages the Linux proxy socket under the job directory rather than private /tmp, so the user daemon can bind mount it. CLI extraction/captions selection interfaces are unchanged.
 
-## Exact pending gate
+## Resolved approval and verified runtime
 
-Automatic approval review rejected Docker's official path-scoped `flags=(unconfined)` RootlessKit profile as broader than the previous approval. No profile was applied. The parent has requested exact action-time approval. Do not apply it, use --force, change the global namespace policy, or introduce an equivalent workaround before that answer. Docker user daemon remains inactive.
+The user explicitly approved the exact path-scoped RootlessKit `flags=(unconfined)` userns exception after its effect was explained. A single retried application succeeded. Profile: /etc/apparmor.d/media-rootlesskit, attached only to /home/ubuntu/bin/rootlesskit. Global namespace restriction remains 1. Rootless Docker user service is active and enabled, with lingering already enabled. No rootful daemon/socket or Docker group grant was added.
 
-## Once that gate is legitimately resolved
+Daemon configuration disables iptables, ip6tables and bridge management. Docker reports rootless, builtin seccomp and cgroupns, cgroup v2, and memory/PID/CPU quota support. The checksum-verified image is loaded; Docker reports image ID sha256:140d8ddd1d762b402969fc24a11849a416a08c67926754936a2cc23dd5f9a828. A network-none restricted container confirmed Node24.18.0, yt-dlp2026.08.19 and an empty route table.
 
-Use the reviewed official Docker rootless setup helper in /home/ubuntu/bin. Keep daemon firewall/bridge management disabled with the reviewed deploy/importer/rootless/daemon.json configuration. Start/enable the user daemon, inspect docker info for rootless + cgroupv2 and resource controls, load the checksum-verified staged image via the per-user Unix socket, then validate native Linux socket/relay acquisition before activation. Never expose a Docker TCP API or mount the Docker socket into the downloader.
+The real imports.download CLI branch retrieved the official 352078-byte public speech fixture through the isolated Linux container and enforcing relay in 3986 ms. A second run under a transient unit with User=ubuntu, PrivateTmp=yes, NoNewPrivileges=yes, ProtectSystem=strict and the same writable service data directory succeeded in 3675 ms. The probe used an encoded-dot URL for the same unrestricted fixture to exercise yt-dlp rather than the direct-file shortcut. This verifies native runner acquisition, not platform extraction or YouTube access. Temporary job directories and containers were removed by the existing cleanup path.
 
-The prepared environment.example contains only non-secret normal runtime settings. Do not enable URL_IMPORTS_ENABLED until the native isolated runner actually passes. Direct-file HTTP acquisition is independently verified and remains active. A generic direct WAV check is not evidence of platform extraction; report the distinction. Prior Oracle YouTube sign-in/bot-check remains unresolved.
+The media service now has DOCKER_BIN=/home/ubuntu/bin/docker, DOCKER_HOST=unix:///run/user/1001/docker.sock and IMPORT_RUNNER_ROOTLESS=1. Its PrivateTmp, NoNewPrivileges and ProtectSystem protections remain. Caddy and Media Studio are active, public health stays paid, and Flappy Bird returns HTTP200.
+
+## Remaining owner boundary
+
+YouTube-specific configuration and platform activation are deliberately unchanged for the user's other agent. Public health still reports videoPlatforms=false. No proxy/evasion hooks, cookies, alternate clients or routing changes were introduced. Prior Oracle YouTube sign-in/bot-check remains unresolved. Normal rootless runtime is ready; do not misreport that as verified platform extraction.
