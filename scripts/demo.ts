@@ -1,0 +1,4 @@
+import {Studio,command} from '../src/core';
+import {readFile} from 'node:fs/promises';
+const s=new Studio();await s.init();await command(['ffmpeg','-hide_banner','-loglevel','error','-y','-f','lavfi','-i','testsrc=size=640x360:rate=24','-f','lavfi','-i','sine=frequency=440:sample_rate=44100','-t','5','-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac','data/demo.mp4']);
+const asset=await s.upload(await readFile('data/demo.mp4'));const q=await s.quote({assetId:asset.id,steps:[{type:'clip',start:1,duration:3},{type:'normalize'},{type:'convert',targetBytes:500000},{type:'frames'},{type:'repair_subtitles',text:'1\n00:00:00.000 --> 00:00:02.000\nSynthetic demo tone'}]});const j=await s.enqueue(q.id,'demo-'+Date.now());let r;do{await Bun.sleep(100);r=await s.read('jobs',j.id)}while(['queued','running'].includes(r.status));console.log(JSON.stringify(r,null,2));if(r.status!=='succeeded')process.exitCode=1;

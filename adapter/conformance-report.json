@@ -1,0 +1,1 @@
+{"reportVersion":1,"starterVersion":"1.0.2","protocolVersion":"2026-07-28","toolchain":{"node":"24.12.0","platform":"darwin","arch":"arm64"},"durationMs":1911,"status":"passed","sampleCall":{"tool":"inspect_asset","status":"passed"},"artifact":{"bytes":397127,"sha256":"55948942d4cd43d64e2c150f74ebce5bcbfaa83952cdea5c3953f68c8dfad5f7"},"discoveredToolCount":4}
