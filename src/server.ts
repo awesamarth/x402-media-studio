@@ -6,7 +6,7 @@ import {Imports} from './imports';
 import {MAX_UPLOAD_BYTES} from './limits';
 import {aiCapabilities} from './local-ai';
 import {loadAccounts,principal} from './accounts';
-import {Payments,paymentConfig,billingMode} from './payments';
+import {Payments,paymentConfig,billingMode,settlementReceipt} from './payments';
 import {createHash} from 'node:crypto';
 import { Studio } from './core';
 export const studio=new Studio();await studio.init();
@@ -31,7 +31,7 @@ const httpServer:Bun.Server<undefined>=Bun.serve({hostname:process.env.HOST||'12
  if(req.method==='POST'&&u.pathname==='/assets/captions'){if(session)await requests.consume(session,'uploads');const body=await req.json();return json(await studio.uploadCaptions(body.text,body.provenance,owner!),201)}
  if(req.method==='POST'&&u.pathname==='/assets'){if(receivingUpload)return json({error:'One upload at a time; retry later'},429);receivingUpload=true;try{if(session)await requests.consume(session,'uploads');return json(await studio.upload(new Uint8Array(await req.arrayBuffer()),owner),201)}finally{receivingUpload=false}}
  if(req.method==='GET'&&p[0]==='assets'&&p.length===2)return json(await studio.asset(p[1]!,owner!));
- if(req.method==='GET'&&p[0]==='quotes'&&p.length===2){const q=await studio.read('quotes',p[1]!);if(q.owner!==owner)return json({error:'Not found'},404);let purchase:any;try{purchase=await studio.read('payments',q.id)}catch{}let fulfillment:any;if(purchase?.status==='settled'){fulfillment=await payments.resume(owner!,q.id);if(fulfillment.notFound)return json({error:'Not found'},404)}let jobId;try{if(['settled','free'].includes(purchase?.status))jobId=(await studio.read('jobs',createHash('sha256').update(purchase.jobKey).digest('hex'))).id}catch{}return json({...q,paymentConfigured:Boolean(config)&&q.mode==='paid',paymentStatus:purchase?.status||'unpaid',...(fulfillment?{fulfillmentStatus:fulfillment.fulfillmentStatus,...(fulfillment.message?{fulfillmentMessage:fulfillment.message}:{})}:{}),...(jobId?{jobId}:{})})};
+ if(req.method==='GET'&&p[0]==='quotes'&&p.length===2){const q=await studio.read('quotes',p[1]!);if(q.owner!==owner)return json({error:'Not found'},404);let purchase:any;try{purchase=await studio.read('payments',q.id)}catch{}let fulfillment:any;if(purchase?.status==='settled'){fulfillment=await payments.resume(owner!,q.id);if(fulfillment.notFound)return json({error:'Not found'},404)}let jobId;try{if(['settled','free'].includes(purchase?.status))jobId=(await studio.read('jobs',createHash('sha256').update(purchase.jobKey).digest('hex'))).id}catch{}return json({...q,paymentConfigured:Boolean(config)&&q.mode==='paid',paymentStatus:purchase?.status||'unpaid',...(settlementReceipt(purchase)?{settlementReceipt:settlementReceipt(purchase)}:{}),...(fulfillment?{fulfillmentStatus:fulfillment.fulfillmentStatus,...(fulfillment.message?{fulfillmentMessage:fulfillment.message}:{})}:{}),...(jobId?{jobId}:{})})};
  if(req.method==='POST'&&u.pathname==='/quotes'){if(session)await requests.consume(session,'quotes');const body=await req.json();if(body.source&&body.assetId===undefined)body.assetId='0'.repeat(64);return json({...await studio.quote(body,owner,mode),paymentConfigured:Boolean(config)},201)}
  if(req.method==='POST'&&u.pathname==='/workflows')return mode==='free'?await payments.freePurchase(owner!,await req.json()):await payments.purchase(await req.json(),req.headers.get('PAYMENT-SIGNATURE'));
  if(req.method==='POST'&&u.pathname==='/dev/workflows')return json({error:'Use authenticated POST /workflows in free mode'},410);
