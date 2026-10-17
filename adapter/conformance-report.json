@@ -1,12 +1,21 @@
 {
+  "reportVersion": 1,
+  "starterVersion": "1.0.2",
+  "protocolVersion": "2026-07-28",
+  "toolchain": {
+    "node": "24.18.0",
+    "platform": "linux",
+    "arch": "arm64"
+  },
+  "durationMs": 865,
   "status": "passed",
-  "runtime": "Node24.18.0 Linux ARM64",
-  "tools": 9,
-  "bytes": 401096,
-  "sha256": "2df30906b90d71669d7d88677bd26424711c40925e5eb0fd636ca371bb1b3c34",
-  "apiOrigin": "https://x402-media-studio.awesamarth.dev",
-  "hostedChecks": "passed, 9 tools",
-  "hostedUnsignedProposal": "passed, 10000 atomic USDC",
-  "hostedPaymentChallenge": "validated",
-  "realTransactionPerformed": false
+  "sampleCall": {
+    "tool": "inspect_asset",
+    "status": "passed"
+  },
+  "artifact": {
+    "bytes": 401443,
+    "sha256": "d32e79c6e6a658893e63348b6ee795a28909f53d7ef9de0c0adba820efce316d"
+  },
+  "discoveredToolCount": 9
 }

@@ -3,7 +3,7 @@ import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import * as z from "zod/v4";
 import { x402OutputSchema } from "./paybox.js";
 
-import { api, purchaseProposal, quoteSchema, result } from "./client.js";
+import { api, apiBase, purchaseProposal, quoteSchema, result } from "./client.js";
 
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/);
 const handle=z.string().regex(/^[a-f0-9]{64}$/).optional();
@@ -22,7 +22,7 @@ function createServer() {
   server.registerTool("inspect_asset", {
     title: "Inspect media asset", description: "Inspect an uploaded asset. Omit assetId to see setup requirements. Upload media directly to the API before using this plugin.",
     inputSchema: z.object({ assetId: id.optional(),requestHandle:handle }).strict(), outputSchema: output, annotations,
-  }, async ({ assetId,requestHandle }) => result(assetId ? await api(`/assets/${assetId}`,undefined,requestHandle) : { service: "x402-media-studio", apiConfigured: true, payment: "Disabled until backend recipient and facilitator are configured", upload:"Call create_request, then upload raw media to POST /assets with X-Request-Handle. Use the asset ID and same requestHandle. No developer-issued API key.", stepTypes: ["transcribe", "localize", "clip", "frames", "repair_subtitles", "convert", "normalize"] }));
+  }, async ({ assetId,requestHandle }) => result(assetId ? await api(`/assets/${assetId}`,undefined,requestHandle) : { service: "x402-media-studio", apiConfigured: true, health:await api("/health"), docs:new URL("/llms.txt",apiBase()).toString(), upload:"Call create_request. An agent with actual file bytes and an outbound HTTP tool can POST raw media to /assets using X-Request-Handle, retain returned id internally, then quote_workflow. PayBox use_plugin takes JSON and does not document attachment-ID or native-file authorization forwarding. Never invent download URLs or claim the connector alone uploads ChatGPT attachments. Alternatively import_url supports configured direct media hosts. No second connector is required for the existing API workflow.", stepTypes: ["transcribe", "localize", "clip", "frames", "repair_subtitles", "convert", "normalize"] }));
   server.registerTool("import_url", {
     title: "Import public media URL", description: "Quote a bounded public URL workflow in the current API mode. When paid mode is enabled, one server-quoted total covers the workflow, including import, multiple steps, cached and caption-only results. Quoting itself does not charge. Call purchase_workflow with the returned quote ID. Supports configured HTTPS hosts only; playlists, live streams, login and restriction bypass are unsupported. Audio defaults to English transcription, preferring matching manual then automatic source captions for caption-only workflows; JSON artifacts identify provenance. Video defaults to a frame manifest. Use the returned quote ID with purchase_workflow, then get_purchase and get_job. Does not download media inside PayBox.",
     inputSchema: z.object({url:z.string().url().max(2048),media:z.enum(["audio","video"]),idempotencyKey:z.string().regex(/^[a-zA-Z0-9_-]{8,100}$/),steps:steps.optional(),requestHandle:handle}).strict(),outputSchema:output,annotations:{...annotations,readOnlyHint:false},
