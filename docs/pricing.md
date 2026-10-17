@@ -1,0 +1,17 @@
+# Pre-final workflow pricing
+
+Approved pre-final paid price: **0.01 USDC total per purchased workflow**, across all seven supported operations. One step or several steps cost the same total. Imports, source captions and cache hits do not add a surcharge or remove the purchase requirement. Quotes, purchase/job status polls and artifact reads do not charge separately. Free mode still quotes zero and never makes a payment proposal.
+
+The backend price function in `src/pricing.ts` is authoritative. Each immutable quote records its amount and pricing model. The payment challenge and adapter proposal read that quote amount rather than recalculating it. The plugin has no hardcoded numerical charge, allowing future duration-based backend quotes without changing the adapter's payment logic. Final duration rates are unapproved and not implemented.
+
+Direct checks confirmed10000 atomic USDC for each operation, a seven-step workflow, an imported workflow and a genuinely warmed media-cache workflow. Unpaid cached purchase returned402. The plugin proposal copied10000, and a separate fixture quote23456 was also copied exactly, proving amount-driven behavior. No payment transport was called and no real signature or transaction was used.
+
+The supplied recipient passed Ethereum syntax/EIP55 checksum checks with the existing PyCryptodomeX Keccak library. The user confirmed control; ownership was not independently established. The VPS is now in **paid pre-final testing mode**, configured with that recipient, Base mainnet (`eip155:8453`), the known public origin and `https://facilitator.xpay.sh`. No server API key or new account is required.
+
+The official PayBox skill/guide specify the unsigned x402 proposal flow, not a preferred facilitator. [xPay's official facilitator guide](https://docs.xpay.sh/en/x402-protocol/facilitator) documents public Base mainnet USDC support, zero fees, sponsored gas and no authentication. Its sample response snippets are stale; integration uses the pinned official `@x402/core@2.28.0` HTTPFacilitatorClient and current standard response fields (`isValid`, `success`, `transaction`, `network`, `payer`). The SDK's live supported response advertised v2/exact/eip155:8453. An unsigned malformed verification payload was rejected; settlement was never called. Transport-level errors remain failures/pending reconciliation, never successful payments.
+
+`/verify` checks the buyer's signed authorization without moving funds. `/settle` submits the verified transfer on-chain. The backend reserves replay/idempotency state before settlement and admits work only after a successful, matching facilitator settlement response. Unknown settlement remains pending and is never automatically charged again.
+
+The public unauthenticated purchase returned a genuine402 challenge for10000 atomic USDC, the approved recipient and Base. The new bundle was uploaded as a testing draft; PayBox passed nine-tool checks and the unsigned purchase tool, then reported **Payment challenge validated** for the live endpoint. This sends an unpaid request only. No valid wallet signature, successful cryptographic verification, on-chain settlement or paid job success has been exercised. Those remain for the user's own payment approval. The hackathon project remains unsubmitted.
+
+See [flat-price checks](flat-pricing-verification.json) and [live facilitator/PayBox evidence](live-facilitator-verification.json).

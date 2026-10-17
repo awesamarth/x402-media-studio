@@ -85,7 +85,7 @@ Paid flow uses documented x402 v2 challenge/verify/settle with a trusted facilit
 
 Nonce/purchase records are persisted before settlement, and settlement before enqueue. Capacity is checked first but races/crashes remain possible. Authenticated `get_purchase` retries only owed enqueue for known-settled purchases, even after quote expiry, reporting `awaiting_capacity`, `queued` or `enqueue_failed`. It never proposes/verifies/settles again. Unknown settlement remains pending for facilitator-specific operator reconciliation. Preserve payment/nonce records.
 
-Live billing stays free. All payment validation so far uses fake signatures and an isolated mock facilitator, not cryptographic/on-chain proof. Real facilitator compatibility, PayBox hosted checks and any live paid validation remain undone.
+Live billing now uses the approved pre-final flat price: 0.01 USDC total per workflow on Base mainnet through the credential-free xPay facilitator. Quotes, status and downloads do not separately charge. PayBox has validated the live unpaid challenge; no real signed payment or settlement has been performed. See [current pricing and verification](docs/pricing.md).
 
 ## Deployment
 

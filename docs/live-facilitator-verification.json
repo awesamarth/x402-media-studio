@@ -1,0 +1,75 @@
+{
+  "readiness": {
+    "status": "passed",
+    "facilitator": "https://facilitator.xpay.sh",
+    "sdk": "@x402/core@2.28.0 HTTPFacilitatorClient",
+    "supported": {
+      "x402Version": 2,
+      "scheme": "exact",
+      "network": "eip155:8453"
+    },
+    "authenticationRequired": false,
+    "negativeVerify": {
+      "isValid": false,
+      "invalidReason": "unexpected_error"
+    },
+    "settleCalled": false,
+    "signatureProvided": false,
+    "realTransactionPerformed": false
+  },
+  "publicChallenge": {
+    "mode": "paid",
+    "priceUSDC": "0.01 total per workflow",
+    "singleAndTwoStepAmounts": [
+      "10000",
+      "10000"
+    ],
+    "unauthenticatedPurchaseStatus": 402,
+    "x402Version": 2,
+    "requirements": {
+      "scheme": "exact",
+      "network": "eip155:8453",
+      "amount": "10000",
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "payTo": "0x79472239719B2D2Db1944C32ec0Fa6Db4a746513",
+      "maxTimeoutSeconds": 60,
+      "extra": {
+        "name": "USD Coin",
+        "version": "2"
+      }
+    },
+    "resource": {
+      "url": "https://x402-media-studio.awesamarth.dev/purchases/8e2caa33-ca8c-4282-b6d5-1547ae810214",
+      "description": "Enqueue quoted media workflow",
+      "mimeType": "application/json"
+    },
+    "jobCreated": false,
+    "signatureProvided": false,
+    "settlementCalled": false,
+    "realTransactionPerformed": false,
+    "quoteId": "8e2caa33-ca8c-4282-b6d5-1547ae810214",
+    "facilitator": "https://facilitator.xpay.sh"
+  },
+  "hostedPayBox": {
+    "newTestingBundleUploaded": true,
+    "checks": "passed, 9 tools",
+    "createRequestMs": 4320,
+    "paidQuoteMs": 4458,
+    "unsignedProposalMs": 4308,
+    "proposalAmountAtomic": "10000",
+    "quoteId": "acc82280-20d2-4eba-98dd-7319b80d34fe",
+    "validation": "Payment challenge validated",
+    "network": "eip155:8453",
+    "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "recipient": "0x79472239719B2D2Db1944C32ec0Fa6Db4a746513",
+    "approvalSignedBroadcastPaid": false,
+    "hackathonSubmitted": false
+  },
+  "sources": [
+    "https://developer.paybox.sh/skill.md",
+    "https://developer.paybox.sh/requirements.md#x402-payment-proposals",
+    "https://docs.xpay.sh/en/x402-protocol/facilitator",
+    "https://facilitator.xpay.sh/supported"
+  ],
+  "limitation": "Supported network and unsigned rejection/challenge compatibility verified. No valid wallet signature, successful verification or on-chain settlement has been exercised."
+}

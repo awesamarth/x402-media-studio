@@ -1,19 +1,12 @@
 {
   "status": "passed",
-  "runtime": "Node 24.18.0 Linux ARM64",
+  "runtime": "Node24.18.0 Linux ARM64",
   "tools": 9,
-  "bytes": 400892,
-  "sha256": "7277e68baedef07db610b419e6039c6b549b9c7fd3a4b07edeffe4a2673798d1",
+  "bytes": 401096,
+  "sha256": "2df30906b90d71669d7d88677bd26424711c40925e5eb0fd636ca371bb1b3c34",
   "apiOrigin": "https://x402-media-studio.awesamarth.dev",
-  "liveCheck": {
-    "mode": "free",
-    "amountAtomic": "0",
-    "paymentStatus": "not_required",
-    "status": "succeeded",
-    "artifacts": 3,
-    "artifactRead": true,
-    "freshProcessPerCall": true,
-    "jobId": "229b6462bbe42e288d014bdc4079e9d5683c31d12791eddb23cd683c6c2ba979"
-  },
-  "hostedPayBoxVerified": false
+  "hostedChecks": "passed, 9 tools",
+  "hostedUnsignedProposal": "passed, 10000 atomic USDC",
+  "hostedPaymentChallenge": "validated",
+  "realTransactionPerformed": false
 }

@@ -1,0 +1,61 @@
+{
+  "status": "passed",
+  "operations": [
+    {
+      "operation": "transcribe",
+      "amountAtomic": "10000"
+    },
+    {
+      "operation": "localize",
+      "amountAtomic": "10000"
+    },
+    {
+      "operation": "clip",
+      "amountAtomic": "10000"
+    },
+    {
+      "operation": "frames",
+      "amountAtomic": "10000"
+    },
+    {
+      "operation": "repair_subtitles",
+      "amountAtomic": "10000"
+    },
+    {
+      "operation": "convert",
+      "amountAtomic": "10000"
+    },
+    {
+      "operation": "normalize",
+      "amountAtomic": "10000"
+    }
+  ],
+  "combinedSevenStepsAtomic": "10000",
+  "importTotalAtomic": "10000",
+  "freeAmountAtomic": "0",
+  "cachedWorkflowAtomic": "10000",
+  "cachedUnpaidStatus": 402,
+  "proposalMaxAmount": "10000",
+  "adapterUsesFutureQuotedAmount": true,
+  "paymentTransportCalls": 0,
+  "realTransactionPerformed": false,
+  "method": "direct quote and 402/proposal inspection with disposable real FFmpeg cache fixture; fixture-only recipient never used for payment",
+  "bundle": {
+    "bytes": 401096,
+    "sha256": "2df30906b90d71669d7d88677bd26424711c40925e5eb0fd636ca371bb1b3c34",
+    "Node24Conformance": "passed, 9 tools",
+    "desktopCopyMatches": true,
+    "privateCredentialsBundled": false
+  },
+  "production": {
+    "mode": "paid",
+    "recipientSyntaxAndChecksumValid": true,
+    "network": "eip155:8453",
+    "publicOriginConfigured": true,
+    "facilitator": "https://facilitator.xpay.sh",
+    "ownership": "user-confirmed, not independently verified",
+    "SDK": "@x402/core@2.28.0",
+    "credentialsRequired": false,
+    "realSettlementVerified": false
+  }
+}
