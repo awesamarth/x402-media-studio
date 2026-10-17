@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "runtime": "v24.12.0",
+  "transport": "test-only broker fetch shim to real loopback API; not hosted/TLS verification",
+  "tools": [
+    {
+      "tool": "inspect_asset",
+      "status": "passed"
+    },
+    {
+      "tool": "quote_workflow",
+      "status": "passed"
+    },
+    {
+      "tool": "get_job",
+      "status": "passed"
+    },
+    {
+      "tool": "read_artifact",
+      "status": "passed"
+    }
+  ]
+}

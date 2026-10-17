@@ -30,6 +30,10 @@ function createServer() {
     title: "Get workflow job", description: "Read job status and artifact URLs after the paid service returns a job ID. Download large media artifacts outside the plugin.",
     inputSchema: z.object({ jobId: id }).strict(), outputSchema: output, annotations,
   }, async ({ jobId }) => result(await api(`/jobs/${jobId}`)));
+  server.registerTool("read_artifact", {
+    title: "Read a small workflow artifact", description: "Read an owned artifact up to 48 KiB as base64 through the configured brokered credential. Larger media uses the authenticated downloadPath returned by get_job; never put bearer tokens in URLs.",
+    inputSchema: z.object({ jobId: id, name: z.string().regex(/^[a-zA-Z0-9_.-]{1,100}$/) }).strict(), outputSchema: output, annotations,
+  }, async ({jobId,name}) => result(await api(`/jobs/${jobId}/artifacts/${name}?inline=base64`)));
   return server;
 }
 serveStdio(createServer, { legacy: "reject" });

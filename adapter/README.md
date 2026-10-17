@@ -26,3 +26,5 @@ There is no deployed origin yet, so there is no real hostname to allowlist. Paym
 6. Call `get_job` with the job ID. Download returned artifact URLs separately; large media must not pass through the plugin's response.
 
 API calls reject redirects, time out after 6.5 seconds, and reject JSON responses larger than 1 MiB. The hosted sandbox has a 10-second total limit including startup, so long-running work stays in the backend worker. Each call starts fresh; job and quote state live on the backend.
+
+`get_job` returns authenticated relative downloadPath values. `read_artifact` returns artifacts up to 48 KiB as base64 through the configured brokered header; larger media requires the direct authenticated download route. No bearer secret appears in URLs or tool text. Production purchases remain refused due to unresolved quote/signature binding; see ../docs/payment-binding.md.
