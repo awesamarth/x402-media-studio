@@ -12,7 +12,7 @@ The local conformance sample calls `inspect_asset` without arguments. This check
 
 ## Hosted setup
 
-Set `MEDIA_API_URL` to the deployed HTTPS origin, such as `https://media.example.com`. Replace this illustrative hostname with the actual chosen domain. The value must have no path, credentials, fragment, query, or nonstandard port. Add that exact hostname to the portal network allowlist. No wildcard domains or secrets are required by this adapter. The receiving wallet and facilitator belong in backend configuration; they are not bundled here.
+Set `MEDIA_API_URL` to the deployed HTTPS origin, such as `https://media.example.com`. Replace this illustrative hostname with the actual chosen domain. The value must have no path, credentials, fragment, query, or nonstandard port. Add that exact hostname to the portal network allowlist. No wildcard domains are used. Configure a host-scoped brokered Authorization bearer header for backend data routes; the plugin never reads its secret value. The receiving wallet and facilitator belong in backend configuration; they are not bundled here.
 
 There is no deployed origin yet, so there is no real hostname to allowlist. Payments remain unavailable until the backend implements and configures live payment verification and settlement. The adapter refuses a quote whose `paymentConfigured` is false.
 

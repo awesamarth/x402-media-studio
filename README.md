@@ -44,7 +44,7 @@ Jobs are persisted before processing. One worker executes sequential steps, retr
 - `normalize`: real audio silence removal and loudness normalization. Requires an audio stream.
 - `convert`: H.264/AAC conversion with a requested size budget; very low budgets are rejected. Quality is not guaranteed.
 - `frames`: one first-frame JPEG and manifest. OCR is explicitly unconfigured; this is a bounded preview, not full video indexing.
-- `repair_subtitles`: fixes decimal separators in supplied SRT timestamps. It does not align speech, repair semantics, or validate overlap.
+- `repair_subtitles`: parses SRT/VTT, validates timing, reflows text and applies explicit overlap policies. It does not align speech or repair semantics.
 - `transcribe` and `localize`: rejected with dependency explanation. No speech model, translation provider, transcript cache or OCR engine is configured yet.
 
 ## Payment and PayBox
@@ -54,3 +54,21 @@ See `adapter/README.md`. PayBox can consume x402 APIs directly; the bundle serve
 Payment is deliberately disabled. A real receiver address, supported facilitator integration, challenge/verification/settlement logic, atomic enqueue binding and receipt replay protection are still required. The backend does not accept a PAYMENT-SIGNATURE as proof or pretend a fixture is live payment. Do not deploy this prototype as a paid public service yet.
 
 The current file store is for one local process. Before public deployment add tenant authorization, bounded storage/retention, request quotas, media process isolation, quote ownership, opaque artifact access, and durable database coordination. Treat media uploads as untrusted. Workers have a two-minute subprocess timeout and one FFmpeg thread, but these limits alone are not a production security boundary.
+
+## Current operation matrix
+
+| Planned operation | Current executable behavior | Remaining dependency or limit |
+| --- | --- | --- |
+| Transcription/captions | Rejected with setup explanation | Speech recognition model/provider and transcript cache not implemented |
+| Subtitle localization | Rejected with setup explanation | Translation provider and semantic QA not implemented |
+| Clip extraction | FFmpeg start/duration extraction | No content-aware highlight selection |
+| AI frames/OCR/manifests | First-frame JPEG plus JSON manifest | Full sampling/indexing and OCR not implemented |
+| Subtitle repair | SRT/VTT parsing, timestamp validation, conversion, reflow, ordering/overlap options, warnings | No speech alignment or semantic rewrite |
+| Target filesize/codec | Size-budgeted H.264/AAC MP4 | Fixed codec; no arbitrary codec selection |
+| Silence/audio | Silence removal and loudness normalization | Audio stream required; timing changes are not propagated to existing subtitles |
+
+Subtitle steps accept `options: {format: "srt" | "vtt", overlap: "error" | "trim" | "preserve", sort: boolean, maxChars: 10..100, maxLines: 1..5}`. Defaults reject overlaps and ordering problems, output SRT, and wrap at 42 characters. Long words and excessive line counts produce actionable warnings rather than silently dropping text. Each subtitle step also writes a warnings JSON artifact.
+
+All routes except `/health` and the disabled `/workflows` endpoint require `Authorization: Bearer <LOCAL_DEV_TOKEN>`. With no token configured, data routes fail closed. This is a single-owner local prototype, not multi-tenant authorization. Configure a host-scoped brokered Authorization header for the API in PayBox before hosted data calls; never place this token in source, tool arguments or URLs. The future x402 payment request cannot use custom credential headers and will need a separately designed paid authorization boundary.
+
+The API accepts raw uploads only, never arbitrary URLs. FFmpeg/ffprobe allow only local file/pipe protocols and a small media-format list, rejecting playlist/network ingestion. Invalid media is removed. Limits include 50 MiB input, 30-minute duration, 4K pixels, 8 streams, 8 workflow steps, one worker, one FFmpeg codec thread, 2 MiB subprocess output and a two-minute hard kill per subprocess. These are resource controls, not complete media sandboxing. User cancellation is currently unsupported. Retries only rerun local deterministic media processing in the same job directory; payments are never retried by the worker. Converted media may change timing or quality and should be checked before use.

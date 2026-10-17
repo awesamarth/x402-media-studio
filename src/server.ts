@@ -2,7 +2,8 @@ import { Studio } from './core';
 export const studio=new Studio();await studio.init();
 const json=(v:unknown,status=200)=>Response.json(v,{status});
 Bun.serve({hostname:process.env.HOST||'127.0.0.1',port:Number(process.env.PORT||8787),maxRequestBodySize:50*1024*1024,async fetch(req){const u=new URL(req.url);const p=u.pathname.split('/').filter(Boolean);try{
- if(u.pathname==='/health')return json({ok:true,paymentConfigured:false,capabilities:{clip:true,frames:true,convert:true,normalize:true,repair_subtitles:'timestamp punctuation only',transcribe:false,localize:false,ocr:false}});
+ if(u.pathname==='/health')return json({ok:true,paymentConfigured:false,capabilities:{clip:true,frames:true,convert:true,normalize:true,repair_subtitles:'SRT/VTT validation, reflow and explicit overlap handling',transcribe:false,localize:false,ocr:false}});
+ if(u.pathname!=='/workflows' && (!process.env.LOCAL_DEV_TOKEN||req.headers.get('authorization')!==`Bearer ${process.env.LOCAL_DEV_TOKEN}`))return json({error:'Configure LOCAL_DEV_TOKEN and provide its Bearer token'},401);
  if(req.method==='POST'&&u.pathname==='/assets')return json(await studio.upload(new Uint8Array(await req.arrayBuffer())),201);
  if(req.method==='GET'&&p[0]==='assets'&&p.length===2)return json(await studio.read('assets',p[1]!));
  if(req.method==='GET'&&p[0]==='quotes'&&p.length===2)return json(await studio.read('quotes',p[1]!));
