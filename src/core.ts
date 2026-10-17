@@ -23,7 +23,7 @@ export function validate(w:Workflow) {
  for(const s of w.steps){
   if(!s||!real.includes(s.type))throw Error('Unsupported workflow step');
   if(s.type==='clip'&&(!(Number.isFinite(s.start)&&s.start!>=0)||!(Number.isFinite(s.duration)&&s.duration!>0&&s.duration!<=600)))throw Error('clip requires start >= 0 and duration 0–600 seconds');
-  if(s.type==='convert'&&!(Number.isInteger(s.targetBytes)&&s.targetBytes!>=100000&&s.targetBytes!<=100000000))throw Error('convert targetBytes must be 100000–100000000');
+  if(s.type==='convert'&&s.targetBytes!==undefined&&!(Number.isInteger(s.targetBytes)&&s.targetBytes!>=100000&&s.targetBytes!<=100000000))throw Error('convert targetBytes must be 100000–100000000');
   if(s.ocr!==undefined&&typeof s.ocr!=='boolean')throw Error('ocr must be boolean');
   if(s.type==='frames'&&s.atSeconds!==undefined&&(!Array.isArray(s.atSeconds)||!s.atSeconds.length||s.atSeconds.length>12||s.atSeconds.some(t=>!Number.isFinite(t)||t<0)))throw Error('frames atSeconds requires 1–12 finite nonnegative sample times');
   if(s.type==='clip'||s.type==='normalize')captions=false;

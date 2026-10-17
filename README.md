@@ -39,7 +39,7 @@ The API binds to `127.0.0.1:8787`. Current testing stays `BILLING_MODE=free` and
 | `clip` | FFmpeg clip extraction | Start/duration inside media; no content-aware highlight selection |
 | `frames` | Selected JPEGs, timestamped JSON manifest, optional real OCR text/boxes/confidence and TSV | `atSeconds` up to 12 samples, default `[0]`; English OCR only; sample times are requested seeks with possible one-frame error; image coordinates reference the scaled output |
 | `repair_subtitles` | SRT/VTT parsing, timing/order validation, conversion, reflow and warning artifact | Explicit overlap policies; no speech alignment or semantic rewriting |
-| `convert` | Full-duration H.264/AAC MP4 within a target byte budget | Fixed codec; infeasible/truncated results fail rather than silently claiming success |
+| `convert` | Quality-focused MP4 by default; optional target byte budget | CRF20 medium, unchanged dimensions/timing, AAC copied; reports savings or original kept. Explicit infeasible targets can fail |
 | `normalize` | Actual silence removal and loudness normalization with synchronized video trimming | -45 dB/0.3s silence detection, 0.05s padding, -16 LUFS target; needs audio; emits kept intervals and measured output duration |
 
 Transcription/repair/localization supply captions to the next caption step automatically when `text` is omitted. Translation consumes the preceding transcript; repair consumes translated captions. Media operations consume the preceding media output. Clip/normalize invalidate earlier captions because the timeline changes; transcribe after them. Convert preserves the timeline. All reported times refer to the media at that step, not automatically the original upload.

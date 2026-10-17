@@ -16,7 +16,7 @@ const steps=z.array(z.discriminatedUnion('type',[
   z.object({type:z.literal('clip'),start:z.number().min(0),duration:z.number().positive().max(600)}).strict(),
   z.object({type:z.literal('frames'),atSeconds:z.array(z.number().min(0)).min(1).max(12).optional(),ocr:z.boolean().optional()}).strict(),
   z.object({type:z.literal('repair_subtitles'),text:z.string().max(100000).optional(),options:subtitleOptions.optional()}).strict(),
-  z.object({type:z.literal('convert'),targetBytes:z.number().int().min(100000).max(100000000)}).strict(),
+  z.object({type:z.literal('convert'),targetBytes:z.number().int().min(100000).max(100000000).optional()}).strict(),
   z.object({type:z.literal('normalize')}).strict(),
 ])).min(1).max(8);
 const annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true };
@@ -43,7 +43,7 @@ function createServer() {
     inputSchema:z.object({importId:id,requestHandle:handle}).strict(),outputSchema:output,annotations,
   },async ({importId,requestHandle})=>result(await api(`/imports/${importId}`,undefined,requestHandle)));
   server.registerTool("quote_workflow", {
-    title: "Quote a media workflow", description: "Create and save a price quote for media operations requested by the user on their selected uploaded file or supported source URL. Does not charge the user or start processing. Does not download source media or enqueue a job. Each billable step costs 0.01 USDC. Use from/to for localization, atSeconds for frame timestamps, and targetBytes for compression. Frame timestamps refer to the current media after earlier steps; sample original-time frames before clipping. Backend validation failures return an explicit error, not a quote.",
+    title: "Quote a media workflow", description: "Create and save a price quote for media operations requested by the user on their selected uploaded file or supported source URL. Does not charge the user or start processing. Does not download source media or enqueue a job. Each billable step costs 0.01 USDC. Use from/to for localization, atSeconds for frame timestamps, and optional targetBytes only when an explicit output-size budget is wanted. Omit targetBytes for quality-focused H.264 CRF20 medium compression; audio is copied when AAC. Lossy encoding cannot guarantee identical quality or a smaller file. A larger encode may return the original MP4 with a compression report. Frame timestamps refer to the current media after earlier steps; sample original-time frames before clipping. Backend validation failures return an explicit error, not a quote.",
     inputSchema: z.object({ assetId: id.optional(),source:z.object({url:z.string().url().max(2048),media:z.enum(["audio","video"])}).strict().optional(), steps,requestHandle:handle }).strict(), outputSchema: output, annotations: { ...annotations, readOnlyHint: false, idempotentHint:false },
   }, async ({requestHandle,...workflow}) => {try{return result(await api('/quotes',workflow,requestHandle))}catch(error){return {...result({ok:false,error:{code:'quote_failed',message:error instanceof Error?error.message:'Quote request failed'},paymentStarted:false,processingStarted:false}),isError:true}}});
   server.registerTool("purchase_workflow", {
