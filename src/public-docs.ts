@@ -301,7 +301,78 @@ export const openapi = {
         "security": [],
         "responses": {
           "201": {
-            "description": "Success"
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requestId",
+                    "requestHandle",
+                    "expiresAt",
+                    "upload",
+                    "workflow",
+                    "limits"
+                  ],
+                  "properties": {
+                    "requestId": {
+                      "type": "string"
+                    },
+                    "requestHandle": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$",
+                      "description": "Private temporary bearer; do not publish or include in payment URL/body"
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "upload": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "method": {
+                          "const": "POST"
+                        },
+                        "contentType": {
+                          "const": "application/octet-stream"
+                        },
+                        "requiredHeader": {
+                          "const": "X-Request-Handle"
+                        },
+                        "maxBytes": {
+                          "const": 104857600
+                        },
+                        "body": {
+                          "type": "string"
+                        },
+                        "responseAssetIdField": {
+                          "const": "id"
+                        }
+                      }
+                    },
+                    "workflow": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "bodyExample": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "limits": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid input"
