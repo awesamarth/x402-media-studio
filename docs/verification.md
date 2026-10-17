@@ -41,3 +41,13 @@ Actual installed yt-dlp 2026.08.19 retrieved the upstream whisper.cpp v1.9.4 JFK
 Focused importer/HTTP checks: 8 tests, 86 assertions; TypeScript passed. Adapter Node 24.12.0 official starter checks passed with eight tools; bundle 399470 bytes, SHA-256 aba331a4be6744aa695706e87cae6c165f50e03f0abdc56767540b48caa73f57. Linux downloader isolation and live provider/platform compatibility remain unverified; URL import is disabled on Linux.
 
 Retained public-fixture rerun: 31,057 ms total, transcription 3,010 ms. Report: `data/import-demo/report.json`; artifacts: `data/import-demo/jobs/e2f6024ed2fbc5fdba996880f9e811383334922b55ec04be8c4c42f97dd11bd5/0.transcript.{srt,vtt,json}`. The demo asserts the expected “ask not” phrase.
+
+## Small default, local helper and captions-first (2026-10-17)
+
+Commit 707eb6b selects existing multilingual small in service fallback, local .env.local and setup scripts. SHA256 verified as 1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b; no duplicate download or benchmark was run. A no-inference check of localAI('transcribe') selected ggml-small.bin. Pipeline cache dependencies already hash the selected model content. Base remains an explicit override, never an automatic fallback.
+
+Exact own-file helper passed real HTTP clip→normalize→convert→OCR on the generated speech-and-text fixture. Retained outputs: outputs/try-file/2026-10-17T12-27-55-554Z-5ea2cfdf/. The helper also passed actual HTTP import of the public upstream direct JFK WAV followed by normalization: outputs/try-file/2026-10-17T12-27-50-956Z-51d5770c/. Both isolated temporary servers stopped and removed work copies; downloaded artifacts remain.
+
+Captions-first selection and caption-asset workflow tests passed without Whisper: manual preference, automatic fallback, genuine no-language result, unsupported format rejection, timing/overlap preservation, source provenance and owner isolation. A public YouTube page attempt (BaW_jenozKc) through the guarded real helper FAILED during extraction and produced no artifacts; no media fallback was attempted after that error. Therefore no live YouTube caption success is claimed. Direct-file Generic extraction is the only verified external source path.
+
+Linux ARM64 downloader image built with existing Docker. A network-none container failed direct 1.1.1.1:443 connection and the real loopback relay reached an in-container Unix socket. Full native-Linux proxy→public-download integration remains pending; VPS untouched. See linux-import-runner.md. Sixteen focused core/import/caption/HTTP tests passed (138 assertions), TypeScript passed.

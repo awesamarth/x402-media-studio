@@ -44,3 +44,17 @@ bun run try:file -- '/absolute/path/to/video.mp4' --steps '[{"type":"transcribe"
 The first command produces small-model transcript SRT/VTT/JSON. The second produces numbered intermediate videos, audio metrics, JPEG frames, OCR TSVs and a frame manifest. The third produces the English transcript plus Spanish SRT. Original files stay unchanged. URL selection uses video when steps need frames/clipping/conversion, otherwise audio.
 
 Verified URL source: the upstream direct JFK WAV URL using yt-dlp Generic extractor. YouTube page URLs pass the allowlist validator but have **not** been tested end to end. Their downloader success is conditional; authentication, playlists, live streams, JS challenge workarounds and restriction bypass are unsupported. W3 media URLs are allowlisted but not tested. Do not describe this as general YouTube support.
+
+## Captions first
+
+URL workflows beginning with transcription and containing only transcription, translation or subtitle repair now inspect source captions first. Matching manual captions win over automatic captions. They are retrieved with yt-dlp skip-download plus the chosen subtitle flag; no media download or Whisper run is needed. When successful extraction shows no matching captions, media download and small-model transcription remain the fallback. Media-changing operations (clip/normalize/convert/frames) still require media download so captions cannot be reused with incorrect timing.
+
+`transcript.json` identifies `engine: source-captions` with manual/automatic provenance, language, extractor and source page, or `engine: whisper.cpp` with generated provenance and model SHA256. Provider overlaps and cue timing are preserved. Unsupported matching subtitle formats, access denial and caption download errors fail explicitly rather than being treated as no captions. The same allowlisted proxy and resource bounds apply to caption requests and redirects.
+
+Example (YouTube live compatibility is not guaranteed):
+
+```bash
+bun run try:file -- 'https://www.youtube.com/watch?v=BaW_jenozKc'
+```
+
+Caption selection/output has passed synthetic workflow tests without Whisper. See verification.md for actual external retrieval results; do not interpret a passing fixture as proof of YouTube availability.
