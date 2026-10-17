@@ -90,3 +90,5 @@ Live billing stays free. All payment validation so far uses fake signatures and 
 ## Deployment
 
 The existing VPS inspection and isolation plan are in [deployment.md](docs/deployment.md). No deployment, DNS/Caddy change, push or portal submission occurred. Linux ARM64 dependency wheels resolve from pinned hashed locks, but runtime installation/inference and latency on that VPS still need verification. Rebuild whisper.cpp there; do not copy Mac executables/venvs. Public operation also needs retention/quota policy, media isolation and ordinary service hardening. See [morning setup](docs/morning-setup.md) for the remaining actions.
+
+Public URL import: see [setup and limits](docs/url-import.md). The initial guarded downloader is macOS-only; Linux URL import remains unavailable.

@@ -18,6 +18,14 @@ function createServer() {
     title: "Inspect media asset", description: "Inspect an uploaded asset. Omit assetId to see setup requirements. Upload media directly to the API before using this plugin.",
     inputSchema: z.object({ assetId: id.optional() }).strict(), outputSchema: output, annotations,
   }, async ({ assetId }) => result(assetId ? await api(`/assets/${assetId}`) : { service: "x402-media-studio", apiConfigured: Boolean(process.env.MEDIA_API_URL), payment: "Disabled until backend recipient and facilitator are configured", upload: "Upload raw media directly to POST /assets; use the returned asset ID.", stepTypes: ["transcribe", "localize", "clip", "frames", "repair_subtitles", "convert", "normalize"] }));
+  server.registerTool("import_url", {
+    title: "Import public media URL", description: "Queue a bounded public URL download and real workflow in free mode. Supports configured HTTPS hosts only; playlists, live streams, login and restriction bypass are unsupported. Audio defaults to English transcription; video defaults to a frame manifest. Poll get_import, then get_job. Does not download media inside PayBox.",
+    inputSchema: z.object({url:z.string().url().max(2048),media:z.enum(["audio","video"]),idempotencyKey:z.string().regex(/^[a-zA-Z0-9_-]{8,100}$/),steps:steps.optional()}).strict(),outputSchema:output,annotations:{...annotations,readOnlyHint:false},
+  },async request=>result(await api("/imports",request)));
+  server.registerTool("get_import", {
+    title:"Get public media import",description:"Read the owned import status. When jobId appears, get_job provides processing status and artifacts.",
+    inputSchema:z.object({importId:id}).strict(),outputSchema:output,annotations,
+  },async ({importId})=>result(await api(`/imports/${importId}`)));
   server.registerTool("quote_workflow", {
     title: "Quote a media workflow", description: "Get a quote for an ordered workflow. Provider-dependent steps may be unavailable. Does not pay or enqueue work.",
     inputSchema: z.object({ assetId: id, steps }).strict(), outputSchema: output, annotations: { ...annotations, readOnlyHint: false },
