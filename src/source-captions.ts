@@ -11,6 +11,7 @@ export function selectCaptions(metadata:any,requested='en') {
  return undefined;
 }
 export function captionDocument(text:string,provenance:CaptionSource){
+ if(typeof text!=='string'||!provenance||Object.keys(provenance).some(k=>!['kind','language','trackLanguage','pageUrl','extractor'].includes(k))||!['manual','automatic'].includes(provenance.kind)||typeof provenance.language!=='string'||!/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]+)*$/.test(provenance.language)||typeof provenance.trackLanguage!=='string'||provenance.trackLanguage.length>30||typeof provenance.pageUrl!=='string'||provenance.pageUrl.length>2048||typeof provenance.extractor!=='string'||provenance.extractor.length>80)throw Error('Invalid source caption text or provenance');
  if(Buffer.byteLength(text)>2*1024*1024)throw Error('Caption file exceeds 2 MiB');
  // Strip WebVTT inline timestamps/formatting while retaining provider cue boundaries.
  const clean=text.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');

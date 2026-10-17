@@ -1,3 +1,18 @@
+# Current local YouTube caption command
+
+```bash
+cd /Users/awesamarth/Desktop/code/x402-media-studio
+bun run try:file -- 'https://www.youtube.com/watch?v=UF8uR6Z6KLc'
+```
+
+Verified with real retrieval: installed official yt-dlp fetched manual English track en-eEY6OEpapPo. The helper uploaded explicit captions into the authenticated local API and produced 244 timed segments, SRT/VTT/JSON, without downloading video or running Whisper. Outputs: outputs/try-file/2026-10-17T12-46-29-489Z-e9682022/. JSON identifies source-captions/manual/Youtube/en; SRT and VTT timing matches, from 7.47 through 903.76 seconds.
+
+The trusted interactive helper invokes yt-dlp directly using argument arrays and ordinary skip-download/write-info-json/subtitle flags, selecting exactly one matching manual or automatic track. It uses a clean temporary HOME and no cookies, extractor client overrides, special proxy, remote-component setup or identity changes. Metadata is written to a bounded temporary info file instead of forcing multi-megabyte metadata through the API runner's stdout limit. Metadata and unused temporary files are removed; only final artifacts remain. Limits: 120 seconds per CLI invocation, 16 MiB total temporary files, 12 MiB info JSON, 2 MiB selected captions, 30-minute caption timeline. The helper's supported caption language remains English. Whisper small is used for actual media transcription; existing source captions take priority for caption-only workflows.
+
+This local helper is a trusted operator command. Its direct-network CLI path is not callable through the public /imports endpoint. That endpoint retains its SSRF-enforcing relay and still needs native/public deployment integration work. Local captions enter the backend through authenticated POST /assets/captions; processing uses the same quote/job/artifact API. No general public YouTube API success is claimed from this local result.
+
+The historical diagnostics below describe earlier failures and have been superseded for the local helper by the successful direct-CLI result above. No general YouTube block should be inferred from those failures.
+
 # Test your own file through HTTP
 
 From the repository root:

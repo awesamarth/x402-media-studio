@@ -1,3 +1,9 @@
+# Current distinction: local CLI versus public URL API
+
+The trusted `bun run try:file -- YOUTUBE_URL` command now uses installed official yt-dlp directly for caption-only YouTube workflows, selects one track, then uploads captions into the authenticated API. Real Stanford-video manual-caption retrieval and job output succeeded; see try-file.md. No custom extractor or client override is used.
+
+The server-side POST /imports path still enforces SSRF boundaries through its local relay. That altered path received HTTP 429 on the YouTube webpage in a controlled minimal-listing comparison, whereas normal installed yt-dlp succeeded on the same Mac/video. The exact lower-level network cause remains unresolved; the relay pins public IPv4 while native resolution offers IPv4/IPv6, but address-family causality has not been proved. This is a wrapper-path discrepancy, not evidence of a general YouTube access block. The unguarded operator CLI path is not exposed as a server mode.
+
 # Import a public media URL
 
 Run the API with Bun and `BILLING_MODE=free`, then send an authenticated `POST /imports`:
