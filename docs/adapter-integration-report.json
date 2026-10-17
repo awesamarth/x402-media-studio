@@ -12,6 +12,14 @@
       "status": "passed"
     },
     {
+      "tool": "purchase_workflow",
+      "status": "passed"
+    },
+    {
+      "tool": "get_purchase",
+      "status": "passed"
+    },
+    {
       "tool": "get_job",
       "status": "passed"
     },

@@ -23,11 +23,15 @@ function createServer() {
     inputSchema: z.object({ assetId: id, steps }).strict(), outputSchema: output, annotations: { ...annotations, readOnlyHint: false },
   }, async (workflow) => result(await api("/quotes", workflow)));
   server.registerTool("purchase_workflow", {
-    title: "Prepare workflow payment", description: "Prepare an unsigned x402 payment proposal for a quote. PayBox obtains approval and sends payment. Poll the PayBox request until terminal, extract job ID from service response, then call get_job. Never repurchase an uncertain payment.",
-    inputSchema: z.object({ quoteId: id, idempotencyKey: z.string().min(8).max(128).regex(/^[a-zA-Z0-9_-]+$/) }).strict(), outputSchema: x402OutputSchema, annotations,
-  }, async ({ quoteId, idempotencyKey }) => purchaseProposal(quoteSchema.parse(await api(`/quotes/${quoteId}`)), idempotencyKey));
+    title: "Prepare workflow payment", description: "Start a real authenticated job in free mode, or prepare an unsigned x402 payment proposal in paid mode. Free mode never creates a zero-value proposal. PayBox obtains approval and sends payment. Poll the PayBox request until terminal, call get_purchase with the original quote ID to retrieve the authenticated job ID, then call get_job. Never repurchase an uncertain payment.",
+    inputSchema: z.object({ quoteId: id, idempotencyKey: z.string().min(8).max(128).regex(/^[a-zA-Z0-9_-]+$/) }).strict(), outputSchema: x402OutputSchema.partial().extend({data:z.json().optional()}).strict(), annotations:{...annotations,readOnlyHint:false},
+  }, async ({ quoteId, idempotencyKey }) => {const quote=quoteSchema.parse(await api(`/quotes/${quoteId}`));return quote.mode==='free'?result(await api('/workflows',{quoteId,idempotencyKey})):purchaseProposal(quote,idempotencyKey)});
+  server.registerTool("get_purchase", {
+    title: "Get owned purchase status", description: "Read your quote and purchase status through the brokered account credential. After payment settles, returns the job ID when enqueue succeeds. Does not initiate or retry payment.",
+    inputSchema: z.object({ quoteId: id }).strict(), outputSchema: output, annotations,
+  }, async ({quoteId}) => result(await api(`/quotes/${quoteId}`)));
   server.registerTool("get_job", {
-    title: "Get workflow job", description: "Read job status and artifact URLs after the paid service returns a job ID. Download large media artifacts outside the plugin.",
+    title: "Get workflow job", description: "Read owned job status and artifact paths after get_purchase returns a job ID. Download large media artifacts outside the plugin.",
     inputSchema: z.object({ jobId: id }).strict(), outputSchema: output, annotations,
   }, async ({ jobId }) => result(await api(`/jobs/${jobId}`)));
   server.registerTool("read_artifact", {

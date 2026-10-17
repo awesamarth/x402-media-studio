@@ -24,8 +24,9 @@ export async function api(path: string, body?: unknown) {
 export function result(data: z.infer<ReturnType<typeof z.json>>) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data) }], structuredContent: { data } };
 }
-export const quoteSchema = z.object({ id: z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/), amountAtomic: z.string().regex(/^[1-9][0-9]{0,19}$/), paymentConfigured: z.boolean(), chain: z.enum(["eip155:8453", "solana:mainnet"]).default("eip155:8453"), expiresAt: z.string().optional() }).passthrough();
+export const quoteSchema = z.object({ id: z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/), mode:z.enum(['free','paid']).default('paid'), amountAtomic: z.string().regex(/^(0|[1-9][0-9]{0,19})$/), paymentConfigured: z.boolean(), chain: z.enum(["eip155:8453", "solana:mainnet"]).default("eip155:8453"), expiresAt: z.string().optional() }).passthrough();
 export function purchaseProposal(quote: z.infer<typeof quoteSchema>, idempotencyKey: string) {
+  if(quote.mode!=='paid'||quote.amountAtomic==='0')throw Error('Free execution does not create a payment proposal');
   if (!quote.paymentConfigured) throw new Error("Payments are not configured on the media API. No payment proposal was created.");
   const expiry = Math.min(Date.now() + 240000, quote.expiresAt ? Date.parse(quote.expiresAt) : Infinity);
   if (!Number.isFinite(expiry) || expiry <= Date.now()) throw new Error("Quote expired or has an invalid expiry; request a new quote.");

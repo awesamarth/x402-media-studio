@@ -18,3 +18,4 @@ test("expired quotes and non HTTPS origins are refused", () => {
   expect(apiBase).toThrow("HTTPS");
   delete process.env.MEDIA_API_URL;
 });
+test('free quote cannot generate a zero-amount x402 proposal',()=>{expect(()=>purchaseProposal(quoteSchema.parse({id:'free_quote',mode:'free',amountAtomic:'0',paymentConfigured:false}),'free-key-123')).toThrow('Free execution')});
