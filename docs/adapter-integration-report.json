@@ -26,6 +26,11 @@
     {
       "tool": "read_artifact",
       "status": "passed"
+    },
+    {
+      "tool": "purchase_workflow",
+      "status": "passed",
+      "scenario": "expired settled recovery; no payment"
     }
   ]
 }

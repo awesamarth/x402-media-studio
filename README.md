@@ -108,3 +108,9 @@ The single switch is BILLING_MODE=free|paid; default is free. Free mode executes
 Paid mode requires all validated recipient/facilitator/network/origin/account settings. Incomplete configuration prevents startup; errors never silently switch to free. Quotes retain their creation mode; request a new quote after switching modes. The retired development route cannot bypass paid mode. PAYMENTS_ENABLED is obsolete and ignored; use BILLING_MODE only. Provider-dependent work still needs configured local engines/models or separately authorized provider setup even when service billing is free.
 
 The core demo runs real free media processing. Bundled adapter integration also starts a real free workflow via purchase_workflow and checks its resulting artifact. Neither test proves live payment compatibility.
+
+## Already-settled purchase recovery
+
+Authenticated get_purchase (GET /quotes/:id) retries job creation for a known-settled purchase, independently of quote expiry. It never verifies or settles payment again. It reports fulfillmentStatus awaiting_capacity, queued or enqueue_failed separately from paymentStatus settled. Release queue/storage capacity and poll the same owned purchase again; do not pay again. Deterministic job keys and enqueue locks preserve one job under concurrent polling. Capacity is checked before settlement, but a crash/race can still require this durable recovery. Unknown payment outcomes remain pending for operator reconciliation and are not promoted to settled by polling.
+
+The adapter also recognizes known-settled purchases before expiry/proposal logic and returns recovery status without another proposal. get_purchase may create the owed job and is marked accordingly in tool metadata.

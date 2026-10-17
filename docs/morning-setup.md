@@ -20,6 +20,8 @@ Ambiguous settlement remains pending without another charge. Facilitator-specifi
 
 ## Evidence
 
-`bun test`: 17 passing tests at the latest checkpoint; focused fixtures include two-account isolation, concurrent payment reuse, invalid/failed/unknown settlement, free-default/paid-fail-closed modes and real media outputs. No real wallet or facilitator call occurred.
+`bun test`: 18 passing tests at the latest checkpoint; focused fixtures include two-account isolation, concurrent payment reuse, invalid/failed/unknown settlement, free-default/paid-fail-closed modes and real media outputs. No real wallet or facilitator call occurred.
 
 Default Node22 fails official conformance as expected. Existing Node24.12.0 passes the exact command documented in verification.md. Loopback tests and adapter/backend integration required sandbox escalation. Adapter integration uses an explicit broker fetch shim, so it does not prove hosted TLS or real secret-broker behavior. Upload/submission and paid validation remain undone.
+
+Settled-purchase recovery is implemented: owner polling get_purchase retries enqueue after quote expiry without a proposal or another settlement. It reports awaiting_capacity separately from enqueue_failed; release queue/storage capacity and poll again. This is distinct from unknown settlement, which still needs operator reconciliation. The final focused fixture verifies one settlement and one job under concurrent recovery.

@@ -21,6 +21,8 @@ export class Payments {
  async facilitator(action:string,payload:unknown){const r=await this.transport(`${this.config!.facilitator}/${action}`,{method:'POST',redirect:'error',headers:{'content-type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(8000)});if(!r.ok)throw Error('Facilitator response unavailable');const text=await r.text();if(text.length>65536)throw Error('Facilitator response too large');return JSON.parse(text)}
  purchase(body:any,signature:string|null){const next=this.tail.then(()=>this.run(body,signature));this.tail=next.catch(()=>{});return next}
  freePurchase(owner:string,body:any){const next=this.tail.then(async()=>{if(!body||typeof body.quoteId!=='string'||!/^[-a-zA-Z0-9_]{8,100}$/.test(body.idempotencyKey)||Object.keys(body).some(k=>!['quoteId','idempotencyKey'].includes(k)))return Response.json({error:'Use quoteId and idempotencyKey only'},{status:400});const q=await this.studio.read('quotes',body.quoteId);if(q.owner!==owner)return Response.json({error:'Not found'},{status:404});if(q.mode!=='free')return Response.json({error:'Quote mode changed; request a new free quote'},{status:409});let prior;try{prior=await this.studio.read('payments',q.id)}catch(e:any){if(e.code!=='ENOENT')throw e}if(prior&&prior.key!==body.idempotencyKey)return Response.json({error:'Quote already used with another idempotency key'},{status:409});const jobKey='free-'+q.id;await this.studio.enqueue(q.id,jobKey);await this.studio.save('payments',q.id,{id:q.id,owner,key:body.idempotencyKey,jobKey,status:'free'});return Response.json({purchaseId:q.id,mode:'free',paymentStatus:'not_required'},{status:202})});this.tail=next.catch(()=>{});return next}
+ async fulfill(state:any){try{const job=await this.studio.enqueue(state.id,state.jobKey,true);state.fulfillmentStatus='queued';delete state.fulfillmentError;await this.studio.save('payments',state.id,state);return {paymentStatus:'settled',fulfillmentStatus:'queued',jobId:job.id}}catch(error){const message=String(error);state.fulfillmentStatus=/Queue is full|storage quota|Job count limit/.test(message)?'awaiting_capacity':'enqueue_failed';state.fulfillmentError=state.fulfillmentStatus==='awaiting_capacity'?'Release queue/storage capacity and poll the owned purchase again':'Enqueue failed; operator must inspect backend. Do not pay again';await this.studio.save('payments',state.id,state);return {paymentStatus:'settled',fulfillmentStatus:state.fulfillmentStatus,message:state.fulfillmentError}}}
+ resume(owner:string,quoteId:string){const next=this.tail.then(async()=>{const q=await this.studio.read('quotes',quoteId);if(q.owner!==owner)return {notFound:true};const state=await this.studio.read('payments',quoteId);if(state.owner!==owner)return {notFound:true};if(state.status!=='settled')return {paymentStatus:state.status};return this.fulfill(state)});this.tail=next.catch(()=>{});return next}
  async run(body:any,signature:string|null):Promise<Response>{
  const json=(value:unknown,status=200,headers:Record<string,string>={})=>Response.json(value,{status,headers});
  if(!this.config)return json({error:'Payment is unconfigured; no payment accepted'},503);
@@ -31,7 +33,7 @@ export class Payments {
  if(!q.owner)return json({error:'Quote requires authenticated ownership'},409);
  let prior:any;try{prior=await this.studio.read('payments',q.id)}catch(e:any){if(e.code!=='ENOENT')throw e}
  if(prior){if(prior.key!==body.idempotencyKey)return json({error:'Quote already bound to a purchase; inspect authenticated quote status'},409);
- if(prior.status==='settled'){const j=await this.studio.enqueue(q.id,prior.jobKey,true);return json({purchaseId:q.id,paymentStatus:'settled'},200,{'PAYMENT-RESPONSE':encoded(prior.settlement)})}
+ if(prior.status==='settled'){const fulfillment=await this.fulfill(prior);return json({purchaseId:q.id,paymentStatus:'settled',fulfillmentStatus:fulfillment.fulfillmentStatus},200,{'PAYMENT-RESPONSE':encoded(prior.settlement)})}
  return json({paymentStatus:'reconciliation_required',quoteId:q.id,message:'Do not purchase again. Settlement may have been broadcast; operator must reconcile.'},202)}
  if(Date.parse(q.expiresAt)<=Date.now())return json({error:'Quote expired'},410);
  const requirements={scheme:'exact',network:this.config.network,amount:q.amountAtomic,asset:USDC,payTo:this.config.recipient,maxTimeoutSeconds:60,extra:{name:'USD Coin',version:'2'}};
@@ -43,6 +45,7 @@ export class Payments {
  if(!auth||!/^0x[\da-fA-F]{64}$/.test(auth.nonce)||!/^0x[\da-fA-F]{40}$/.test(auth.from)||auth.to?.toLowerCase()!==this.config.recipient.toLowerCase()||auth.value!==q.amountAtomic)return json({error:'Invalid exact EVM authorization'},400);
  const replayId=digest(`${this.config.network}:${USDC.toLowerCase()}:${auth.from.toLowerCase()}:${auth.nonce.toLowerCase()}`);
  try{await this.studio.read('receipts',replayId);return json({error:'Authorization already reserved for a purchase; do not pay again'},409)}catch(e:any){if(e.code!=='ENOENT')throw e}
+ try{await this.studio.assertAdmission()}catch{return json({paymentStatus:'not_attempted',fulfillmentStatus:'awaiting_capacity',message:'No settlement attempted; retry after capacity returns'},503)}
  const request={x402Version:2,paymentPayload:payment,paymentRequirements:requirements};let verified;
  try{verified=await this.facilitator('verify',request)}catch{return json({error:'Verification unavailable; no settlement attempted'},503)}
  if(verified.isValid!==true||verified.payer?.toLowerCase()!==auth.from.toLowerCase())return json({error:'Payment verification rejected'},402,{'PAYMENT-REQUIRED':encoded(challenge)});
@@ -53,7 +56,7 @@ export class Payments {
  state.settlement=settled;
  if(settled.success!==true||!/^0x[\da-fA-F]{64}$/.test(settled.transaction)||settled.network!==this.config.network||settled.payer?.toLowerCase()!==auth.from.toLowerCase()){
  await this.studio.save('payments',q.id,state);return json({paymentStatus:'reconciliation_required',quoteId:q.id,message:'No job enqueued. Inspect facilitator outcome before any new payment.'},202)}
- state.status='settled';await this.studio.save('payments',q.id,state);const j=await this.studio.enqueue(q.id,state.jobKey,true);
- return json({purchaseId:q.id,paymentStatus:'settled'},202,{'PAYMENT-RESPONSE':encoded(settled)});
+ state.status='settled';await this.studio.save('payments',q.id,state);const fulfillment=await this.fulfill(state);
+ return json({purchaseId:q.id,paymentStatus:'settled',fulfillmentStatus:fulfillment.fulfillmentStatus},202,{'PAYMENT-RESPONSE':encoded(settled)});
  }
 }

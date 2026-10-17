@@ -17,3 +17,5 @@ References: [exact EVM scheme](https://github.com/x402-foundation/x402/blob/main
 Remaining genuine decisions: receiving address, facilitator/service authentication contract, public hostname and deployment approval. Static customer accounts must be configured through the operator's chosen credential process. Self-service account onboarding can be designed later; it is not needed to test the current configurable boundary. Model/language choices are separate from payment.
 
 Free mode uses authenticated POST /workflows with immutable ownership and idempotency. It never invokes the facilitator. Paid-mode errors do not fall back to free execution.
+
+Known-settled fulfillment recovery is separate from ambiguous payment reconciliation. Capacity is checked before settlement; races remain possible. Authenticated owner polling retries only enqueue, independently of quote expiry and without any facilitator call. Capacity pressure reports awaiting_capacity. Other enqueue problems report enqueue_failed while preserving settlement evidence. Pending/unknown payment is not promoted by this path.
