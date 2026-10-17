@@ -38,3 +38,12 @@ A real anonymous API request on the VPS imported the official whisper.cpp JFK WA
 YouTube remains a separate issue. The earlier ordinary VPS yt-dlp invocation failed at metadata retrieval with `ERROR: [youtube] UF8uR6Z6KLc: Sign in to confirm you're not a bot`. No HTTP status was supplied in that message, and subtitle selection/download had not begun. This does not prove an IP-reputation, IPv4, or relay cause. The Mac relay behavior is separate evidence; no further YouTube requests were made while the user tested the installed CLI manually. Server platform imports remain disabled and fail before payment/execution.
 
 Caddy activation is still pending explicit approval. This update only restarted the existing loopback API service. The existing public site remains outside the app's route.
+
+
+## Approved public activation — 2026-10-17 14:57 UTC
+
+Samarth approved activating the prepared route. The existing Caddyfile was backed up to `/etc/caddy/Caddyfile.backup-20261017T145733Z` (mode 0600); its original SHA256 matched the recorded value above. Only the prepared `x402-media-studio.awesamarth.dev` reverse proxy block was appended, preserving every existing byte as the prefix. Caddy validation passed before a single successful reload.
+
+Verified public endpoint: https://x402-media-studio.awesamarth.dev . Standard certificate verification passed with that hostname in the certificate SAN and expiry January 15, 2027. `/` and `/health` returned HTTP200; anonymous `POST /requests` returned201 and issued a private handle (not logged). Limits remained one execution/request and twelve executions/hour globally, with 100 MiB uploads. Mode is free, paymentConfigured false; direct-file imports are enabled and video-platform imports disabled. No processing job or transaction was initiated during public verification.
+
+The existing https://flappy-bird.awesamarth.dev/ returned HTTP200 with 2053 response bytes after reload. No firewall, DNS, SSH, or other security settings were changed. Earlier notes saying Caddy activation is pending describe the historical staging state; this approved activation supersedes them.
