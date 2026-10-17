@@ -1,0 +1,58 @@
+{
+  "interface": "PayBox hosted test UI in local Brave",
+  "source": "https://raw.githubusercontent.com/ggml-org/whisper.cpp/v1.9.4/samples/jfk.wav",
+  "quoteId": "5c26c197-ae54-42ae-b228-3ee278f5998a",
+  "jobId": "be10d2bb650baf34a788cf29c86e423cecb5fba07fa58ba683ddcb2154bdc26e",
+  "mode": "free",
+  "paymentStatus": "not_required",
+  "status": "succeeded",
+  "attempts": 1,
+  "steps": [
+    {
+      "type": "clip",
+      "start": 0.137,
+      "duration": 10.731,
+      "cacheHit": false,
+      "durationMs": 22
+    },
+    {
+      "type": "normalize",
+      "cacheHit": false,
+      "durationMs": 62
+    },
+    {
+      "type": "transcribe",
+      "language": "en",
+      "cacheHit": false,
+      "durationMs": 11438
+    },
+    {
+      "type": "localize",
+      "from": "en",
+      "to": "es",
+      "cacheHit": false,
+      "durationMs": 575
+    }
+  ],
+  "artifactCount": 8,
+  "retrieved": {
+    "name": "3.srt",
+    "bytes": 163,
+    "status": "Test succeeded",
+    "hostedMs": 4241
+  },
+  "hostedCallsMs": {
+    "create_request": 4614,
+    "quote_workflow": 4153,
+    "purchase_workflow": 4987,
+    "get_purchase": 3914,
+    "get_job": 4931
+  },
+  "intermediateRunningObserved": false,
+  "limitation": "Job completed before first hosted job-status poll; no claim that a running state was observed. Step durations exclude URL import and queue overhead.",
+  "cacheDeleted": false,
+  "retentionChanged": false,
+  "paymentPerformed": false,
+  "termsAccepted": false,
+  "projectSubmitted": false
+}
