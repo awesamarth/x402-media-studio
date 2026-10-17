@@ -1,0 +1,32 @@
+# Review draft only: requires approved account, paths and credential installation.
+[Unit]
+Description=X402 Media Studio API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=x402-media
+Group=x402-media
+WorkingDirectory=/opt/x402-media-studio
+EnvironmentFile=/etc/x402-media-studio/runtime.env
+EnvironmentFile=/etc/x402-media-studio/api.env
+Environment=BILLING_MODE=free
+Environment=HOST=127.0.0.1
+Environment=PORT=8787
+Environment=DATA_DIR=/var/lib/x402-media-studio
+ExecStart=/opt/x402-media-studio/.runtime/bin/bun src/server.ts
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/x402-media-studio
+UMask=0077
+MemoryMax=3G
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target
