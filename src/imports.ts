@@ -26,7 +26,7 @@ async function download(url:string,media:'audio'|'video',dir:string,steps:Step[]
  const proxy=await startImportProxy(proxyDir?{socketPath:join(proxyDir,'proxy.sock')}:{});
  const remoteDir=linux?'/work':dir;
  const policy=`(version 1)(allow default)(deny network-outbound)(allow network-outbound (remote tcp "localhost:${proxy.port}"))`;
- const common=['--ignore-config','--no-cache-dir','--no-plugin-dirs','--no-js-runtimes','--no-remote-components','--no-playlist','--socket-timeout','10','--retries','0','--fragment-retries','0','--extractor-retries','0','--concurrent-fragments','1','--downloader','native','--proxy',`http://127.0.0.1:${linux?7777:proxy.port}`,'--max-filesize',String(MAX_UPLOAD_BYTES),'--limit-rate','2M','--no-progress','--no-warnings','--restrict-filenames','--paths',remoteDir,'--paths',`temp:${remoteDir}`,'-o','source.%(ext)s'];
+ const common=['--ignore-config','--no-playlist','--socket-timeout','10','--retries','0','--fragment-retries','0','--extractor-retries','0','--concurrent-fragments','1','--proxy',`http://127.0.0.1:${linux?7777:proxy.port}`,'--max-filesize',String(MAX_UPLOAD_BYTES),'--limit-rate','2M','--no-progress','--restrict-filenames','--paths',remoteDir,'--paths',`temp:${remoteDir}`,'-o','source.%(ext)s'];
  async function run(args:string[]) {
   return await new Promise<string>((ok,fail)=>{
    const container=linux?linuxImportCommand(dir,proxyDir!,[...common,...args,'--',url]):undefined;
@@ -44,7 +44,8 @@ async function download(url:string,media:'audio'|'video',dir:string,steps:Step[]
  }
  try {
   const captionsOnly=steps[0]?.type==='transcribe'&&steps.every(s=>['transcribe','localize','repair_subtitles'].includes(s.type));
-  const metadata=JSON.parse(await run(['--dump-single-json','--skip-download',...(captionsOnly?['--ignore-no-formats-error']:[])]));
+  await run(['--skip-download','--write-info-json',...(captionsOnly?['--ignore-no-formats-error']:[])]);
+  const metadataPath=join(dir,'source.info.json');if((await stat(metadataPath)).size>12*1024*1024)throw Error('Extractor metadata exceeds 12 MiB');const metadata=JSON.parse(await readFile(metadataPath,'utf8'));await rm(metadataPath);
   if(metadata.has_drm||(metadata.availability&&!['public','unlisted'].includes(metadata.availability)))throw Error('Source is restricted or requires authentication; no caption/media fallback');
   if(metadata._type==='playlist'||metadata.entries||metadata.is_live||metadata.is_upcoming||(metadata.live_status&&metadata.live_status!=='not_live'))throw Error('Playlists, live and upcoming streams are not supported');
   if(captionsOnly){const selected=selectCaptions(metadata,steps[0]?.language||'en');if(selected){
