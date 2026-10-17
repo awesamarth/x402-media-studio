@@ -1,0 +1,96 @@
+{
+  "disposableCleanup": {
+    "status": "passed",
+    "root": "/tmp/x402-retention-disposable-4z36h4",
+    "method": "real FFmpeg clip jobs plus disposable state and injected sweep clock; not a wall-clock one-hour wait",
+    "completionWindowSeconds": 3600,
+    "sharedInputAndCacheProtected": true,
+    "expiredOutputInputCacheDeleted": true,
+    "failedPartialDeleted": true,
+    "activeProtected": true,
+    "legacyPreserved": true,
+    "expiredTombstone": true,
+    "accessRecovery": true,
+    "orphanUploadDeleted": true,
+    "dryRunPreserved": true,
+    "first": {
+      "dryRun": false,
+      "removed": [
+        "jobs/b6c36752ebb4abeabb9de2a0870134d824cd1aaa5dced2ed9b5b197bfa7ba560",
+        "jobs/disposable-failed-job",
+        "assetAccess/19be851d1c65f58732f46dafafd1448aead230a80006552707ab74e8ff0b8b90.json",
+        "assets/74db9b65cbcb92fa6064c45fadaa6d86c7f38bc8cede367a20374e7116260a2c",
+        "assets/74db9b65cbcb92fa6064c45fadaa6d86c7f38bc8cede367a20374e7116260a2c.json"
+      ],
+      "legacyPreserved": [
+        "assets/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.json"
+      ],
+      "sweepIntervalSeconds": 30
+    },
+    "second": {
+      "dryRun": false,
+      "removed": [
+        "jobs/ae1ff4ae4ddcd3d7e391f8c2f7c5cb2d37fad3fbf869012f31674359fabc29dd",
+        "assetAccess/2f707ee5bd6bc5c7560227dbf524a171d1e2290acd3deca7ae028ec2362445ca.json",
+        "assetAccess/9ce8f246a1b4ca5d10eae24afd0a7e4605e04587760a456b1686c737fa2e6a30.json",
+        "assets/2da414f379d756453ed78ffdc3c9a1b3d66a5ca8bdd46f8b3edf82135e91a6c5",
+        "assets/2da414f379d756453ed78ffdc3c9a1b3d66a5ca8bdd46f8b3edf82135e91a6c5.json",
+        "cache/1ff84e6f2d870d347ad99a7a3d08537c6cbfbf3fa18085e72c48d3e3f06f30ad"
+      ],
+      "legacyPreserved": [
+        "assets/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.json"
+      ],
+      "sweepIntervalSeconds": 30
+    }
+  },
+  "httpAndScheduler": {
+    "status": "passed",
+    "root": "/tmp/x402-retention-http-disposable-eeLa8F",
+    "httpUploadExpiry": "2026-10-17T16:38:15.148Z",
+    "httpJobExpiry": "2026-10-17T16:38:15.292Z",
+    "downloadExpiresHeader": "Sat, 17 Oct 2026 16:38:15 GMT",
+    "expiredArtifactStatus": 410,
+    "completionAccessRecovered": true,
+    "scheduledDeletion": true,
+    "schedulerObservedAfterMs": 30126,
+    "jobStatusAfterDeletion": "expired",
+    "method": "real HTTP/FFmpeg, disposable deadline moved into past, actual scheduler awaited"
+  },
+  "liveVPS": {
+    "status": "passed",
+    "mode": "free",
+    "paymentStatus": "not_required",
+    "jobId": "75c4dc68c72c7c80c88928481cffdd0d3b70b77845d986a28ad798ff0e12b21f",
+    "completedAt": "2026-10-17T15:42:23.382Z",
+    "expiresAt": "2026-10-17T16:42:23.382Z",
+    "retentionSeconds": 3600,
+    "artifacts": 1,
+    "privateHandleRecorded": false
+  },
+  "oldGeneratedFilesCleared": {
+    "clearedFiles": 76,
+    "clearedBytes": 1350777,
+    "directories": [
+      "cache/01e473d3d7ee103e70ac83afa86400676e15ad98f262dc03964821323fc25c50",
+      "cache/1d64ea2436584d6c00c99288446fd5089054e80d57e8362214abdc2c8969ac28",
+      "cache/2d6b6770f094ceae3600dceba72485e283bf6fb9a581476ce0708121b869a490",
+      "cache/62f766bab4ccad0dc3c6ff59b75932eb6668bbdbf68bfaf7be86a04a4640ae90",
+      "cache/98b659f4ac3621d67ec63dfdadc0cb680b8b58272d3048cabde16c74e9c2131e",
+      "cache/a8ad7c4194b69ffeebdd7a059654f455c64120e706239f3a73a11b08f5e64e35",
+      "cache/d9107b267c2a31d4119038f5909bc35d77173879db2711e1c25cf23e66c6531d",
+      "cache/e13a593b5ad9195124dc50be87180718d23bf27cb6f3edf5a0f193a80a6df409",
+      "cache/e5505e022cda2d7d37027c47fa305da9749839b7186db5790d3dd68e10e6f661",
+      "cache/e6da7ccb05d3197949d1850cc2486bab62ec1cbeb7eedf57b2ff3e0577b30ee9",
+      "cache/f4edb4a97e9caebe9ac474df5b35d25c04286d9136f4731e99b8ce06f8973522",
+      "cache/ff2ea1880f1f4594138e216cdf617cb25af27be6ca61268058ff34e345affd30",
+      "jobs/18352162de4cc8279af5812067da692e78da8c36ddbe05b1ba6c0ad1fd3484eb",
+      "jobs/229b6462bbe42e288d014bdc4079e9d5683c31d12791eddb23cd683c6c2ba979",
+      "jobs/3724a018c19580989cd960a6e9e84deabc025915926bbbeb1cf20ae166b81323",
+      "jobs/be10d2bb650baf34a788cf29c86e423cecb5fba07fa58ba683ddcb2154bdc26e",
+      "jobs/d5a99cd59d1150289d1a3ca80f53241964ab0719d64f34c31d40ddbbc2b6949d"
+    ],
+    "inputsPreserved": true,
+    "sourceModelsAndEvidencePreserved": true,
+    "newManagedJobsPreserved": true
+  }
+}

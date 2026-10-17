@@ -94,3 +94,5 @@ The existing VPS inspection and isolation plan are in [deployment.md](docs/deplo
 Public URL import: see [setup and limits](docs/url-import.md). Linux uses a network-disabled Docker runner; see the deployment instructions.
 
 One billing switch: keep `BILLING_MODE=free` for private testing; when enabled, `paid` gates **all seven operations**, including cheap/caption-only work and cache hits. Polling/downloading an already purchased job never settles again. Real paid mode also requires the receiving address, Base network and trusted facilitator configuration. No customer API key is required.
+
+Current deployed file lifecycle: [one-hour retention](docs/retention.md), including actual scheduled cleanup and preserved legacy inputs.
