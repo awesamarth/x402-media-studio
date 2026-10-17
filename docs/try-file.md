@@ -58,3 +58,5 @@ bun run try:file -- 'https://www.youtube.com/watch?v=BaW_jenozKc'
 ```
 
 Caption selection/output has passed synthetic workflow tests without Whisper. See verification.md for actual external retrieval results; do not interpret a passing fixture as proof of YouTube availability.
+
+Latest YouTube diagnosis: after allowing the observed exact www.google.com tunnel needed during extraction, the public Stanford video UF8uR6Z6KLc returned an upstream “Sign in to confirm you're not a bot” error with no denied proxy hosts. No HTTP status was reported by yt-dlp. Do not use the YouTube command as a promised successful demo in this environment; captions-first is implemented/tested with fixtures, while live YouTube retrieval is currently blocked. No cookie workaround is included.

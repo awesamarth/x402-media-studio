@@ -31,15 +31,15 @@ async function download(url:string,media:'audio'|'video',dir:string,steps:Step[]
   return await new Promise<string>((ok,fail)=>{
    const container=linux?linuxImportCommand(dir,proxyDir!,[...common,...args,'--',url]):undefined;
    const child=spawn(container?.binary||'/usr/bin/sandbox-exec',container?.args||['-p',policy,process.env.YT_DLP_BIN||'/usr/local/bin/yt-dlp',...common,...args,'--',url],{cwd:dir,detached:true,env:{PATH:process.env.PATH,HOME:dir,TMPDIR:dir,LANG:'en_US.UTF-8'},stdio:['ignore','pipe','pipe']});
-   let output='',size=0,done=false;let accessDenied=false;let diagnosticTail='';
+   let output='',size=0,done=false;let accessDenied=false;let diagnosticTail='';let safeDiagnostic='';
    const stop=()=>{if(container){const cleanup=spawn(container.binary,['rm','-f',container.name],{stdio:'ignore'});cleanup.on('error',()=>{});}try{process.kill(-child.pid!,'SIGKILL')}catch{}};
    const timer=setTimeout(()=>{stop();finish(Error('Import exceeded its three minute deadline'))},180000);
    const monitor=setInterval(()=>{void readdir(dir).then(async files=>{let bytes=0;for(const file of files){const s=await stat(join(dir,file));if(s.isFile())bytes+=s.size}if(bytes>MAX_UPLOAD_BYTES){stop();finish(Error('Import exceeded 100 MiB'))}}).catch(()=>{})},500);
    function finish(error?:Error){if(done)return;done=true;clearTimeout(timer);clearInterval(monitor);error?fail(error):ok(output)}
    child.stdout.on('data',chunk=>{size+=chunk.length;if(size>2*1024*1024){stop();finish(Error('Extractor response exceeded its limit'))}else output+=chunk.toString()});
-   child.stderr.on('data',chunk=>{diagnosticTail=(diagnosticTail+chunk.toString()).slice(-2048);if(/sign.?in|log.?in|cookies|not a bot|private video|HTTP Error (403|429)|geo.?restrict|video (?:is unavailable|is not available|isn't available|has been removed)|not available in your country|copyright|blocked/i.test(diagnosticTail))accessDenied=true}); // Provider responses may contain signed URLs: never persist them.
+   child.stderr.on('data',chunk=>{diagnosticTail=(diagnosticTail+chunk.toString()).slice(-2048);safeDiagnostic=diagnosticTail.split('\n').filter((line:string)=>/ERROR:|WARNING:/i.test(line)).slice(-3).join(' ').replace(/https?:\/\/\S+/g,'[URL]').replace(/[^\x20-\x7e]/g,'').slice(0,1000);if(/sign.?in|log.?in|cookies|not a bot|private video|HTTP Error (403|429)|geo.?restrict|video (?:is unavailable|is not available|isn't available|has been removed)|not available in your country|copyright|blocked/i.test(diagnosticTail))accessDenied=true}); // Provider responses may contain signed URLs: never persist them.
    child.on('error',()=>finish(Error('Downloader could not start; install yt-dlp and FFmpeg')));
-   child.on('close',code=>finish(code===0&&!accessDenied?undefined:Error(accessDenied?'Source denied access or requires authentication; caption lookup did not establish absence, so no media fallback was attempted':'Downloader rejected or could not retrieve this public URL; authenticated, restricted and unsupported sources are not bypassed')));
+   child.on('close',code=>{const reason=accessDenied?'Source denied access or requires authentication; caption lookup did not establish absence, so no media fallback was attempted':'Downloader rejected or could not retrieve this public URL; authenticated, restricted and unsupported sources are not bypassed';finish(code===0&&!accessDenied?undefined:Error(reason+(safeDiagnostic?'; '+safeDiagnostic:'')+'; denied proxy hosts: '+(proxy.diagnostics().deniedHosts.join(', ')||'none')))});
   });
  }
  try {

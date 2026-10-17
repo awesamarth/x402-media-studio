@@ -3,7 +3,7 @@ import {lookup} from 'node:dns/promises';
 import {connect, isIP, type Socket} from 'node:net';
 
 const frontends = new Set(['raw.githubusercontent.com', 'media.w3.org', 'youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be']);
-const tunnels = new Set([...frontends, 'youtubei.googleapis.com', 'i.ytimg.com']);
+const tunnels = new Set([...frontends, 'youtubei.googleapis.com', 'i.ytimg.com', 'www.google.com']);
 function allowedTunnel(host: string): boolean {
   return tunnels.has(host) || /^[a-z0-9-]+(?:\.[a-z0-9-]+)*\.googlevideo\.com$/.test(host);
 }
@@ -31,10 +31,10 @@ export function validateRemoteUrl(input: string): URL {
   return url;
 }
 /** TLS remains end-to-end. The caller must enforce an OS egress guard around the client. */
-export async function startImportProxy(options: {maxBytes?: number;socketPath?:string} = {}): Promise<{port: number; close(): Promise<void>}> {
+export async function startImportProxy(options: {maxBytes?: number;socketPath?:string} = {}): Promise<{port: number;diagnostics():{deniedHosts:string[]}; close(): Promise<void>}> {
   const maxBytes = options.maxBytes ?? 108 * 1024 * 1024;
   if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) throw Error('Invalid proxy byte limit');
-  const sockets = new Set<Socket>();
+  const sockets = new Set<Socket>();const deniedHosts=new Set<string>();
   let total = 0, active = 0, used = 0, closed = false;
   const server = createServer((_req,res) => {res.writeHead(403, {'Connection':'close'});res.end('HTTPS CONNECT required');});
   server.headersTimeout = 10_000;
@@ -43,6 +43,7 @@ export async function startImportProxy(options: {maxBytes?: number;socketPath?:s
     const socket = client as Socket;
     const match = /^([a-z0-9.-]+):443$/.exec(req.url || '');
     const deny = () => {if (!socket.destroyed) socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');};
+    if(match&&!allowedTunnel(match[1])&&deniedHosts.size<8)deniedHosts.add(match[1]);
     if (closed || !match || !allowedTunnel(match[1]) || isIP(match[1]) || used >= 64 || active >= 8 || total >= maxBytes) {deny();return;}
     used++; active++;
     let upstream: Socket | undefined;
@@ -79,5 +80,5 @@ export async function startImportProxy(options: {maxBytes?: number;socketPath?:s
   await new Promise<void>((resolve,reject)=>{server.once('error',reject);options.socketPath?server.listen(options.socketPath,resolve):server.listen(0,'127.0.0.1',resolve);});
   const address = server.address();
   if (!address) throw Error('Proxy listener unavailable');
-  return {port:typeof address==='string'?0:address.port,close:async()=>{closed=true;for(const socket of sockets) socket.destroy();await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}};
+  return {port:typeof address==='string'?0:address.port,diagnostics:()=>({deniedHosts:[...deniedHosts]}),close:async()=>{closed=true;for(const socket of sockets) socket.destroy();await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}};
 }
