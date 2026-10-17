@@ -1,3 +1,11 @@
+# Current keyless customer ownership
+
+Paid customers do not configure API keys or accounts. POST /requests automatically mints a scoped one-hour handle; private data calls send X-Request-Handle. Static account tokens described in historical notes below remain optional private/free test compatibility only and are not required to enable paid mode.
+
+Quotes retain the request owner, immutable workflow/source and amount. The public /purchases/<quoteId> endpoint accepts x402 payment without a customer credential; the purchase records the verified payer. A successful settlement enqueues once and returns jobId; reading outputs still needs the original private request handle. Every service execution, including cached and caption-only work, is paid in paid mode. Poll/download/recovery does not charge again.
+
+No claim is made that standard x402 signs the workflow body or URL. Preserve the existing replay reservation, pending-outcome reconciliation and durable settled-job recovery. The earlier mandatory static customer-account plan is superseded by docs/keyless-api.md.
+
 # Payment, quote ownership and replay boundary
 
 The documented exact EVM authorization signs transfer fields (payer, recipient, amount, validity and nonce), not our quote ID or HTTP body. Our earlier description overstated this as a demonstrated cross-customer theft attack. A payer choosing another own equal-priced quote is order interchangeability. Cross-customer misuse additionally requires a stolen unused payment authorization or inducing its owner to approve funding a different purchase. An unsigned resource field does not provide signed order intent, and we make no such guarantee.

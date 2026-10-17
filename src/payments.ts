@@ -9,7 +9,6 @@ export function paymentConfig():PaymentConfig|undefined {
  if(!/^0x[\da-fA-F]{40}$/.test(recipient)||/^0x0{40}$/.test(recipient))throw Error('Set a valid public PAYMENT_RECIPIENT');
  for(const value of [facilitator,origin]){const u=new URL(value);if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash||u.pathname!=='/'||u.port)throw Error('Payment URLs must be exact HTTPS origins on port 443')}
  if(process.env.PAYMENT_NETWORK!=='eip155:8453')throw Error('Set PAYMENT_NETWORK=eip155:8453; only Base USDC is implemented');
- if(!process.env.LOCAL_DEV_TOKEN&&!process.env.API_ACCOUNTS_JSON)throw Error('Configure authenticated data access before enabling payment');
  return {recipient,facilitator,origin,network:'eip155:8453'};
 }
 export const encoded=(value:unknown)=>Buffer.from(JSON.stringify(value)).toString('base64');
@@ -33,11 +32,11 @@ export class Payments {
  if(!q.owner)return json({error:'Quote requires authenticated ownership'},409);
  let prior:any;try{prior=await this.studio.read('payments',q.id)}catch(e:any){if(e.code!=='ENOENT')throw e}
  if(prior){if(prior.key!==body.idempotencyKey)return json({error:'Quote already bound to a purchase; inspect authenticated quote status'},409);
- if(prior.status==='settled'){const fulfillment=await this.fulfill(prior);return json({purchaseId:q.id,paymentStatus:'settled',fulfillmentStatus:fulfillment.fulfillmentStatus},200,{'PAYMENT-RESPONSE':encoded(prior.settlement)})}
+ if(prior.status==='settled'){const fulfillment=await this.fulfill(prior);return json({purchaseId:q.id,paymentStatus:'settled',fulfillmentStatus:fulfillment.fulfillmentStatus,...(fulfillment.jobId?{jobId:fulfillment.jobId}:{})},200,{'PAYMENT-RESPONSE':encoded(prior.settlement)})}
  return json({paymentStatus:'reconciliation_required',quoteId:q.id,message:'Do not purchase again. Settlement may have been broadcast; operator must reconcile.'},202)}
  if(Date.parse(q.expiresAt)<=Date.now())return json({error:'Quote expired'},410);
  const requirements={scheme:'exact',network:this.config.network,amount:q.amountAtomic,asset:USDC,payTo:this.config.recipient,maxTimeoutSeconds:60,extra:{name:'USD Coin',version:'2'}};
- const resource={url:new URL('/workflows',this.config.origin).toString(),description:'Enqueue quoted media workflow',mimeType:'application/json'};
+ const resource={url:new URL('/purchases/'+q.id,this.config.origin).toString(),description:'Enqueue quoted media workflow',mimeType:'application/json'};
  const challenge={x402Version:2,resource,accepts:[requirements]};
  if(!signature)return json(challenge,402,{'PAYMENT-REQUIRED':encoded(challenge)});
  let payment:any;try{if(signature.length>32768||!/^[A-Za-z0-9+/]+={0,2}$/.test(signature))throw Error();payment=JSON.parse(Buffer.from(signature,'base64').toString());if(payment.x402Version!==2||canonical(payment.accepted)!==canonical(requirements)||!payment.payload)throw Error()}catch{return json({error:'Invalid x402 payload or mismatched requirements'},400)}
@@ -50,13 +49,13 @@ export class Payments {
  try{verified=await this.facilitator('verify',request)}catch{return json({error:'Verification unavailable; no settlement attempted'},503)}
  if(verified.isValid!==true||verified.payer?.toLowerCase()!==auth.from.toLowerCase())return json({error:'Payment verification rejected'},402,{'PAYMENT-REQUIRED':encoded(challenge)});
  // Persist reservation BEFORE settlement. Any unknown outcome remains pending, never automatically re-settled.
- const state={id:q.id,owner:q.owner,key:body.idempotencyKey,jobKey:'paid-'+q.id,status:'pending',replayId,settlement:undefined as any};
+ const state={id:q.id,owner:q.owner,key:body.idempotencyKey,jobKey:'paid-'+q.id,status:'pending',payer:verified.payer,replayId,settlement:undefined as any};
  await this.studio.save('receipts',replayId,{quoteId:q.id});await this.studio.save('payments',q.id,state);
  let settled;try{settled=await this.facilitator('settle',request)}catch{return json({paymentStatus:'reconciliation_required',quoteId:q.id},202)}
  state.settlement=settled;
  if(settled.success!==true||!/^0x[\da-fA-F]{64}$/.test(settled.transaction)||settled.network!==this.config.network||settled.payer?.toLowerCase()!==auth.from.toLowerCase()){
  await this.studio.save('payments',q.id,state);return json({paymentStatus:'reconciliation_required',quoteId:q.id,message:'No job enqueued. Inspect facilitator outcome before any new payment.'},202)}
  state.status='settled';await this.studio.save('payments',q.id,state);const fulfillment=await this.fulfill(state);
- return json({purchaseId:q.id,paymentStatus:'settled',fulfillmentStatus:fulfillment.fulfillmentStatus},202,{'PAYMENT-RESPONSE':encoded(settled)});
+ return json({purchaseId:q.id,paymentStatus:'settled',fulfillmentStatus:fulfillment.fulfillmentStatus,...(fulfillment.jobId?{jobId:fulfillment.jobId}:{})},202,{'PAYMENT-RESPONSE':encoded(settled)});
  }
 }

@@ -19,14 +19,14 @@ export function importRequest(value:any):Request {
  return {...value,steps};
 }
 /** Every downloader subprocess is restricted to the enforcing local CONNECT proxy. */
-async function download(url:string,media:'audio'|'video',dir:string,steps:Step[]) {
+export async function download(url:string,media:'audio'|'video',dir:string,steps:Step[]) {
  if(!['darwin','linux'].includes(process.platform))throw Error('Unsupported import runner platform');
  const linux=process.platform==='linux'||process.env.IMPORT_RUNNER==='docker';
  const proxyDir=linux?await mkdtemp(join(tmpdir(),'media-proxy-')):undefined;
  const proxy=await startImportProxy(proxyDir?{socketPath:join(proxyDir,'proxy.sock')}:{});
  const remoteDir=linux?'/work':dir;
  const policy=`(version 1)(allow default)(deny network-outbound)(allow network-outbound (remote tcp "localhost:${proxy.port}"))`;
- const common=['--ignore-config','--no-playlist','--socket-timeout','10','--retries','0','--fragment-retries','0','--extractor-retries','0','--concurrent-fragments','1','--proxy',`http://127.0.0.1:${linux?7777:proxy.port}`,'--max-filesize',String(MAX_UPLOAD_BYTES),'--limit-rate','2M','--no-progress','--restrict-filenames','--paths',remoteDir,'--paths',`temp:${remoteDir}`,'-o','source.%(ext)s'];
+ const common=['--ignore-config','--no-playlist','--socket-timeout','20','--retries','0','--fragment-retries','0','--extractor-retries','0','--concurrent-fragments','1','--proxy',`http://127.0.0.1:${linux?7777:proxy.port}`,'--max-filesize',String(MAX_UPLOAD_BYTES),'--limit-rate','2M','--no-progress','--restrict-filenames','--paths',remoteDir,'--paths',`temp:${remoteDir}`,'-o','source.%(ext)s'];
  async function run(args:string[]) {
   return await new Promise<string>((ok,fail)=>{
    const container=linux?linuxImportCommand(dir,proxyDir!,[...common,...args,'--',url]):undefined;

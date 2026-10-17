@@ -1,3 +1,4 @@
+import {Requests} from './requests';
 import {Imports} from './imports';
 import {MAX_UPLOAD_BYTES} from './limits';
 import {aiCapabilities} from './local-ai';
@@ -7,20 +8,22 @@ import {createHash} from 'node:crypto';
 import { Studio } from './core';
 export const studio=new Studio();await studio.init();
 const mode=billingMode();const config=paymentConfig();const payments=new Payments(studio,config);
-const accounts=loadAccounts();
+const accounts=loadAccounts();const requests=new Requests(studio);await requests.init();
 const imports=new Imports(studio);await imports.init();
 let receivingUpload=false;
 const json=(v:unknown,status=200)=>Response.json(v,{status});
-const httpServer=Bun.serve({hostname:process.env.HOST||'127.0.0.1',port:Number(process.env.PORT||8787),maxRequestBodySize:MAX_UPLOAD_BYTES,async fetch(req){const u=new URL(req.url);const p=u.pathname.split('/').filter(Boolean);const owner=principal(req.headers.get('authorization'),accounts);try{
+const httpServer:Bun.Server<undefined>=Bun.serve({hostname:process.env.HOST||'127.0.0.1',port:Number(process.env.PORT||8787),maxRequestBodySize:MAX_UPLOAD_BYTES,async fetch(req){const u=new URL(req.url);const p=u.pathname.split('/').filter(Boolean);const session=mode==='paid'?await requests.authenticate(req.headers.get('X-Request-Handle')):undefined;const owner=session?.owner||principal(req.headers.get('authorization'),accounts);try{
  if(u.pathname==='/health')return json({ok:true,mode,paymentConfigured:Boolean(config),capabilities:{clip:true,frames:true,convert:true,normalize:true,repair_subtitles:'SRT/VTT validation, reflow and explicit overlap handling',...await aiCapabilities()}});
- if(!(u.pathname==='/workflows'&&mode==='paid') && !owner)return json({error:'Configure LOCAL_DEV_TOKEN and provide its Bearer token'},401);
- if(req.method==='POST'&&u.pathname==='/imports'){if(mode!=='free')return json({error:'URL import currently requires free billing mode'},409);return json(await imports.enqueue(await req.json(),owner!),202)}
+ if(req.method==='POST'&&u.pathname==='/requests'){if(mode!=='paid')return json({error:'Anonymous requests are available only in payment-protected mode; free testing is private'},403);try{return json(await requests.create(httpServer.requestIP(req)?.address||'unknown'),201)}catch(e:any){return json({error:e.message},429)}}
+ if(mode==='paid'&&p[0]==='purchases'&&p.length===2&&['GET','POST'].includes(req.method)){let body:any={};if(req.method==='POST'){const text=await req.text();if(text.length>1024)return json({error:'Purchase body too large'},400);if(text.trim())body=JSON.parse(text)}if(Object.keys(body).some(k=>k!=='idempotencyKey'))return json({error:'Purchase accepts idempotencyKey only'},400);return payments.purchase({quoteId:p[1],idempotencyKey:body.idempotencyKey||'purchase-'+p[1]},req.headers.get('PAYMENT-SIGNATURE'))}
+ if(!(u.pathname==='/workflows'&&mode==='paid') && !owner)return json({error:mode==='paid'?'Start POST /requests; use its temporary X-Request-Handle for private data access':'Free testing requires private authentication'},401);
+ if(req.method==='POST'&&u.pathname==='/imports'){if(mode==='paid'){if(session)await requests.consume(session,'quotes');const body=await req.json();const source={url:body.url,media:body.media};return json({...await studio.quote({assetId:'0'.repeat(64),source,steps:body.steps??(body.media==='audio'?[{type:'transcribe',language:'en'}]:[{type:'frames',atSeconds:[0]}])},owner!,mode),paymentConfigured:Boolean(config),message:'Every requested operation, including caption reuse and cached results, starts only after payment'},201)}return json(await imports.enqueue(await req.json(),owner!),202)}
  if(req.method==='GET'&&p[0]==='imports'&&p.length===2)return json(await imports.get(p[1]!,owner!));
- if(req.method==='POST'&&u.pathname==='/assets/captions'){const body=await req.json();return json(await studio.uploadCaptions(body.text,body.provenance,owner!),201)}
- if(req.method==='POST'&&u.pathname==='/assets'){if(receivingUpload)return json({error:'One upload at a time; retry later'},429);receivingUpload=true;try{return json(await studio.upload(new Uint8Array(await req.arrayBuffer()),owner),201)}finally{receivingUpload=false}}
+ if(req.method==='POST'&&u.pathname==='/assets/captions'){if(session)await requests.consume(session,'uploads');const body=await req.json();return json(await studio.uploadCaptions(body.text,body.provenance,owner!),201)}
+ if(req.method==='POST'&&u.pathname==='/assets'){if(receivingUpload)return json({error:'One upload at a time; retry later'},429);receivingUpload=true;try{if(session)await requests.consume(session,'uploads');return json(await studio.upload(new Uint8Array(await req.arrayBuffer()),owner),201)}finally{receivingUpload=false}}
  if(req.method==='GET'&&p[0]==='assets'&&p.length===2)return json(await studio.asset(p[1]!,owner!));
  if(req.method==='GET'&&p[0]==='quotes'&&p.length===2){const q=await studio.read('quotes',p[1]!);if(q.owner!==owner)return json({error:'Not found'},404);let purchase:any;try{purchase=await studio.read('payments',q.id)}catch{}let fulfillment:any;if(purchase?.status==='settled'){fulfillment=await payments.resume(owner!,q.id);if(fulfillment.notFound)return json({error:'Not found'},404)}let jobId;try{if(['settled','free'].includes(purchase?.status))jobId=(await studio.read('jobs',createHash('sha256').update(purchase.jobKey).digest('hex'))).id}catch{}return json({...q,paymentConfigured:Boolean(config)&&q.mode==='paid',paymentStatus:purchase?.status||'unpaid',...(fulfillment?{fulfillmentStatus:fulfillment.fulfillmentStatus,...(fulfillment.message?{fulfillmentMessage:fulfillment.message}:{})}:{}),...(jobId?{jobId}:{})})};
- if(req.method==='POST'&&u.pathname==='/quotes')return json({...await studio.quote(await req.json(),owner,mode),paymentConfigured:Boolean(config)},201);
+ if(req.method==='POST'&&u.pathname==='/quotes'){if(session)await requests.consume(session,'quotes');const body=await req.json();if(body.source&&body.assetId===undefined)body.assetId='0'.repeat(64);return json({...await studio.quote(body,owner,mode),paymentConfigured:Boolean(config)},201)}
  if(req.method==='POST'&&u.pathname==='/workflows')return mode==='free'?await payments.freePurchase(owner!,await req.json()):await payments.purchase(await req.json(),req.headers.get('PAYMENT-SIGNATURE'));
  if(req.method==='POST'&&u.pathname==='/dev/workflows')return json({error:'Use authenticated POST /workflows in free mode'},410);
  if(req.method==='GET'&&p[0]==='jobs'&&p.length===2){const j=await studio.read('jobs',p[1]!);return j.owner===owner?json({...j,artifacts:j.artifacts.map((a:any)=>({...a,downloadPath:`/jobs/${j.id}/artifacts/${a.name}`}))}):json({error:'Not found'},404)};

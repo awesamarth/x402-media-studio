@@ -9,10 +9,10 @@ export function apiBase() {
   }
   return url;
 }
-export async function api(path: string, body?: unknown) {
+export async function api(path: string, body?: unknown, requestHandle?:string) {
   const response = await fetch(new URL(path, apiBase()), {
     method: body === undefined ? "GET" : "POST", redirect: "error",
-    headers: body === undefined ? {} : { "content-type": "application/json" },
+    headers: {...(body===undefined?{}:{"content-type":"application/json"}),...(requestHandle?{"X-Request-Handle":requestHandle}:{})},
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(6500),
   });
@@ -30,5 +30,5 @@ export function purchaseProposal(quote: z.infer<typeof quoteSchema>, idempotency
   if (!quote.paymentConfigured) throw new Error("Payments are not configured on the media API. No payment proposal was created.");
   const expiry = Math.min(Date.now() + 240000, quote.expiresAt ? Date.parse(quote.expiresAt) : Infinity);
   if (!Number.isFinite(expiry) || expiry <= Date.now()) throw new Error("Quote expired or has an invalid expiry; request a new quote.");
-  return proposeX402({ chain: quote.chain, url: new URL("/workflows", apiBase()).toString(), method: "POST", body: { quoteId: quote.id, idempotencyKey }, maxAmount: quote.amountAtomic, expiresAt: new Date(Math.floor(expiry / 1000) * 1000).toISOString().replace(/\.\d{3}Z$/, "Z") });
+  return proposeX402({ chain: quote.chain, url: new URL("/purchases/"+quote.id, apiBase()).toString(), method: "POST", body: { idempotencyKey }, maxAmount: quote.amountAtomic, expiresAt: new Date(Math.floor(expiry / 1000) * 1000).toISOString().replace(/\.\d{3}Z$/, "Z") });
 }

@@ -1,0 +1,58 @@
+{
+  "simulation": "local facilitator responses only; no chain transaction or real wallet signature",
+  "apiKeyUsed": false,
+  "unpaidStatus": 402,
+  "jobStatus": "succeeded",
+  "artifacts": [
+    "0.mp4",
+    "1.mp4",
+    "1.audio.json",
+    "2.mp4",
+    "3.transcript.srt",
+    "3.transcript.vtt",
+    "3.transcript.json",
+    "4.srt",
+    "4.translation.json",
+    "5.warnings.json",
+    "5.vtt",
+    "6.frame-000.jpg",
+    "6.ocr-000.tsv",
+    "6.frame-001.jpg",
+    "6.ocr-001.tsv",
+    "6.frame-002.jpg",
+    "6.ocr-002.tsv",
+    "6.manifest.json"
+  ],
+  "noHandleStatus": 401,
+  "otherHandleStatus": 404,
+  "downloadBytes": 19159,
+  "downloadSha256": "64f1584105ab665a7062c56b19cc1f401ad3a486c04ce7587377da369a64fdc5",
+  "repeatPurchaseStatus": 200,
+  "firstPaymentCounts": {
+    "verify": 1,
+    "settle": 1
+  },
+  "crossQuoteReplayStatus": 409,
+  "operations": [
+    "clip",
+    "normalize",
+    "convert",
+    "transcribe",
+    "localize",
+    "repair_subtitles",
+    "frames"
+  ],
+  "cachedWorkflowRequired402": true,
+  "cachedWorkflowAllStepsHit": true,
+  "finalPaymentCounts": {
+    "verify": 2,
+    "settle": 2
+  },
+  "urlAcquisition": {
+    "quotedWithoutFetching": true,
+    "required402BeforeEnqueue": true,
+    "crossQuoteReplayRejected": 409,
+    "jobStartedOnlyAfterSimulatedSettlement": true,
+    "retrievalResult": "failed: public raw.githubusercontent.com read timeout through retained enforcing relay; no network protections removed"
+  }
+}

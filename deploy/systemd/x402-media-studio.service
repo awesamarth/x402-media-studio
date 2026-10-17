@@ -1,4 +1,4 @@
-# Review draft only: requires approved account, paths and credential installation.
+# Review draft only: existing ubuntu account; payment settings required; no customer API key.
 [Unit]
 Description=X402 Media Studio API
 After=network-online.target
@@ -6,24 +6,22 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=x402-media
-Group=x402-media
-WorkingDirectory=/opt/x402-media-studio
-EnvironmentFile=/etc/x402-media-studio/runtime.env
-EnvironmentFile=/etc/x402-media-studio/api.env
-Environment=BILLING_MODE=free
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/x402-media-studio
+EnvironmentFile=/home/ubuntu/x402-media-studio/.env.local
 Environment=HOST=127.0.0.1
 Environment=PORT=8787
-Environment=DATA_DIR=/var/lib/x402-media-studio
-ExecStart=/opt/x402-media-studio/.runtime/bin/bun src/server.ts
+Environment=DATA_DIR=/home/ubuntu/x402-media-studio/data
+ExecStart=/home/ubuntu/x402-media-studio/.runtime/bin/bun src/server.ts
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=yes
 CapabilityBoundingSet=
 PrivateTmp=yes
-ProtectHome=yes
+ProtectHome=read-only
 ProtectSystem=strict
-ReadWritePaths=/var/lib/x402-media-studio
+ReadWritePaths=/home/ubuntu/x402-media-studio/data
 UMask=0077
 MemoryMax=3G
 TasksMax=128
