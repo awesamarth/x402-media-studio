@@ -1,3 +1,4 @@
+import {MAX_UPLOAD_BYTES} from './limits';
 import {aiCapabilities} from './local-ai';
 import {loadAccounts,principal} from './accounts';
 import {Payments,paymentConfig,billingMode} from './payments';
@@ -8,7 +9,7 @@ const mode=billingMode();const config=paymentConfig();const payments=new Payment
 const accounts=loadAccounts();
 let receivingUpload=false;
 const json=(v:unknown,status=200)=>Response.json(v,{status});
-Bun.serve({hostname:process.env.HOST||'127.0.0.1',port:Number(process.env.PORT||8787),maxRequestBodySize:50*1024*1024,async fetch(req){const u=new URL(req.url);const p=u.pathname.split('/').filter(Boolean);const owner=principal(req.headers.get('authorization'),accounts);try{
+const httpServer=Bun.serve({hostname:process.env.HOST||'127.0.0.1',port:Number(process.env.PORT||8787),maxRequestBodySize:MAX_UPLOAD_BYTES,async fetch(req){const u=new URL(req.url);const p=u.pathname.split('/').filter(Boolean);const owner=principal(req.headers.get('authorization'),accounts);try{
  if(u.pathname==='/health')return json({ok:true,mode,paymentConfigured:Boolean(config),capabilities:{clip:true,frames:true,convert:true,normalize:true,repair_subtitles:'SRT/VTT validation, reflow and explicit overlap handling',...await aiCapabilities()}});
  if(!(u.pathname==='/workflows'&&mode==='paid') && !owner)return json({error:'Configure LOCAL_DEV_TOKEN and provide its Bearer token'},401);
  if(req.method==='POST'&&u.pathname==='/assets'){if(receivingUpload)return json({error:'One upload at a time; retry later'},429);receivingUpload=true;try{return json(await studio.upload(new Uint8Array(await req.arrayBuffer()),owner),201)}finally{receivingUpload=false}}
@@ -21,4 +22,5 @@ Bun.serve({hostname:process.env.HOST||'127.0.0.1',port:Number(process.env.PORT||
  if(req.method==='GET'&&p[0]==='jobs'&&p[2]==='artifacts'&&p.length===4){const j=await studio.read('jobs',p[1]!);if(j.owner!==owner||j.status!=='succeeded'||!j.artifacts.some((a:any)=>a.name===p[3]))return json({error:'Artifact unavailable'},404);const file=Bun.file(studio.path('jobs',j.id,p[3]!));if(u.searchParams.get('inline')==='base64'){if(file.size>49152)return json({error:'Artifact too large for tool; use authenticated downloadPath'},413);return json({name:p[3],encoding:'base64',bytes:file.size,data:Buffer.from(await file.arrayBuffer()).toString('base64')})}return new Response(file,{headers:{'content-disposition':`attachment; filename="${p[3]}"`}})}
  return json({error:'Not found'},404);
  }catch(e:any){return json({error:e.code==='ENOENT'?'Not found':e.message},e.code==='ENOENT'?404:400)}}});
-console.error('Media Studio listening on loopback port '+(process.env.PORT||8787));
+console.error('Media Studio listening on loopback port '+httpServer.port);
+if(process.env.MEDIA_TEST_READY==='1')console.log(JSON.stringify({event:'media-ready',port:httpServer.port,mode}));

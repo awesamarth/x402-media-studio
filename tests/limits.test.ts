@@ -1,0 +1,2 @@
+import {test,expect} from 'bun:test';import {MAX_UPLOAD_BYTES,validateUploadSize} from '../src/limits';
+test('100 MiB upload boundary is inclusive and one byte over is rejected',()=>{expect(MAX_UPLOAD_BYTES).toBe(104857600);expect(()=>validateUploadSize(52428801)).not.toThrow();expect(()=>validateUploadSize(MAX_UPLOAD_BYTES)).not.toThrow();expect(()=>validateUploadSize(MAX_UPLOAD_BYTES+1)).toThrow('100 MiB');expect(()=>validateUploadSize(0)).toThrow()});

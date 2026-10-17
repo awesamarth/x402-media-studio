@@ -2,6 +2,17 @@
 
 A Bun + TypeScript media workflow API, local CPU worker, and thin PayBox MCP adapter. **Billing is free by default.** All seven operations now execute locally; no hosted model API or paid provider is used.
 
+## Test your own file through the actual HTTP API
+
+```sh
+cd /Users/awesamarth/Desktop/code/x402-media-studio
+bun run try:file -- "/absolute/path/to/your-file.mp4"
+```
+
+This starts an isolated FREE loopback server on an available 7xxx port, uses temporary in-memory test authentication, uploads the original bytes, creates/submits a transcription workflow, polls and downloads SRT/VTT/JSON. It stops its own server/process group and removes the working upload afterward; existing servers and your input file are untouched. Results remain under `outputs/try-file/<run>/`, with exact paths printed. No token setup or persistent credential is needed. English is the default; add `--language auto` for automatic language detection. Input limit is **100 MiB (104857600 bytes)**, five minutes for transcription, with an audio stream. This runs real HTTP/model processing, not a mock demo.
+
+The upload endpoint accepts raw binary bodies, not multipart/FormData or base64. curl uses `--data-binary @file`; a same-origin browser client passes a File/Blob as fetch body. The filename and supplied MIME are ignored; the server probes content and returns a SHA-256 asset ID. Cross-origin browser CORS is not configured.
+
 ## Run on this Mac
 
 The engines and models are installed and non-secret paths are in ignored `.env.local`.
@@ -46,7 +57,7 @@ Subtitle options: `format: srt|vtt`, `overlap: error|trim|preserve`, `sort: bool
 | Request | Purpose |
 | --- | --- |
 | GET /health | Billing mode and actual installed capability availability |
-| POST /assets | Raw media, max 50 MiB/30 minutes; content hash and metadata |
+| POST /assets | Raw media, max 100 MiB/30 minutes; content hash and metadata |
 | GET /assets/:id | Metadata, only for an account that uploaded those bytes |
 | POST /quotes | Validate immutable `{assetId,steps}` under account ownership |
 | GET /quotes/:id | Owned quote/purchase status and eventual job ID; resumes owed settled enqueue |
@@ -64,7 +75,7 @@ Media bytes/metadata are content addressed. Every successful step has a reusable
 
 One worker processes jobs sequentially. Job state and idempotency survive restart; interrupted exhausted jobs become terminal failures. Local deterministic steps retry once; payment is never retried by the worker. Run **one backend process** with this file store. Multi-process coordination and user cancellation are unsupported.
 
-Controls: one upload/probe at a time; 50 MiB upload; 30-minute media; 4K/8 streams; 8 workflow steps; 8 queued/running jobs; 256 quote/512 job records; 256 MiB logical data admission budget; bounded step outputs; 2 MiB subprocess logs; two-minute hard subprocess timeout. FFmpeg processing uses one codec/filter thread and model inference two CPU threads. Admission is an application budget, not an OS quota: an in-flight bounded operation can temporarily exceed it. Failed files/cache count toward storage. Operator cleanup/retention is still needed. Untrusted media needs OS sandboxing before public production use. URL ingestion is absent; media protocols/formats are restricted to local inputs.
+Controls: one upload/probe at a time; 100 MiB upload; 30-minute media; 4K/8 streams; 8 workflow steps; 8 queued/running jobs; 256 quote/512 job records; 256 MiB logical data admission budget; bounded step outputs; 2 MiB subprocess logs; two-minute hard subprocess timeout. FFmpeg processing uses one codec/filter thread and model inference two CPU threads. Admission is an application budget, not an OS quota: an in-flight bounded operation can temporarily exceed it. Failed files/cache count toward storage. Operator cleanup/retention is still needed. Untrusted media needs OS sandboxing before public production use. URL ingestion is absent; media protocols/formats are restricted to local inputs.
 
 ## Free/paid switch and payment recovery
 
