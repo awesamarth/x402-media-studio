@@ -26,7 +26,7 @@ export async function download(url:string,media:'audio'|'video',dir:string,steps
  if(!['darwin','linux'].includes(process.platform))throw Error('Unsupported import runner platform');
  const linux=process.platform==='linux'||process.env.IMPORT_RUNNER==='docker';
  const proxyDir=linux?await mkdtemp(join(dir,'.proxy-')):undefined;
- const proxy=await startImportProxy(proxyDir?{socketPath:join(proxyDir,'proxy.sock')}:{});
+ const proxy=await startImportProxy({...proxyDir?{socketPath:join(proxyDir,'proxy.sock')}:{},youtubeProxy:process.env.IMPORT_YOUTUBE_PROXY_URL});
  const remoteDir=linux?'/work':dir;
  const policy=`(version 1)(allow default)(deny network-outbound)(allow network-outbound (remote tcp "localhost:${proxy.port}"))`;
  const jsRuntime=linux?'/usr/local/bin/node':(process.env.YT_DLP_JS_RUNTIME||'/usr/local/bin/node');
@@ -61,7 +61,7 @@ export async function download(url:string,media:'audio'|'video',dir:string,steps
    return {captions:await readFile(file,'utf8'),provenance};
   }}
   if(metadata.duration!=null&&(!Number.isFinite(metadata.duration)||metadata.duration<=0||metadata.duration>(media==='audio'?300:600)))throw Error('Import allows at most five minutes audio or ten minutes video');
-  await run(media==='audio'?['-f','ba[protocol=https]/b[protocol=https]','-x','--audio-format','wav']:['-f','b[height<=?720][protocol=https]','-t','mp4']);
+  await run(media==='audio'?['-f','ba[protocol=https]/b[protocol=https]','-x','--audio-format','wav']:['-t','mp4']);
   const files=(await readdir(dir)).filter(f=>/^source\.(wav|mp4)$/.test(f));
   if(files.length!==1)throw Error('Downloader did not produce one supported media file');
   const file=join(dir,files[0]!);const info=await stat(file);if(info.size>MAX_UPLOAD_BYTES)throw Error('Import exceeded 100 MiB');
