@@ -1,4 +1,5 @@
-import {youtubeVideoId} from './pricing';
+import {youtubeVideoId} from './pricing'; // Historical zero-total asset quotes only.
+import {isDirectFileSource} from './direct-file';
 import {HTTPFacilitatorClient} from '@x402/core/server';
 import {VerifyError,SettleError} from '@x402/core/types';
 import {createHash} from 'node:crypto';
@@ -42,6 +43,8 @@ export class Payments {
  if(prior){if(prior.key!==body.idempotencyKey)return json({error:'Quote already bound to a purchase; inspect authenticated quote status'},409);
  if(prior.status==='settled'){const fulfillment=await this.fulfill(prior);return json({purchaseId:q.id,paymentStatus:'settled',settlementReceipt:settlementReceipt(prior),fulfillmentStatus:fulfillment.fulfillmentStatus,...(fulfillment.jobId?{jobId:fulfillment.jobId}:{})},200,{'PAYMENT-RESPONSE':encoded(prior.settlement)})}
  return json({paymentStatus:'reconciliation_required',quoteId:q.id,message:'Do not purchase again. Settlement may have been broadcast; operator must reconcile.'},202)}
+ // Retired source quotes must not accept new payment. Existing settlement/replay handling above is preserved.
+ if(q.workflow?.source&&!isDirectFileSource(q.workflow.source.url))return json({error:'Source import support was removed; no payment attempted. Upload a local file and request a new quote.'},410);
  if(Date.parse(q.expiresAt)<=Date.now())return json({error:'Quote expired'},410);
  const requirements={scheme:'exact',network:this.config.network,amount:q.amountAtomic,asset:USDC,payTo:this.config.recipient,maxTimeoutSeconds:60,extra:{name:'USD Coin',version:'2'}};
  const resource={url:new URL('/purchases/'+q.id,this.config.origin).toString(),description:'Enqueue quoted media workflow',mimeType:'application/json'};

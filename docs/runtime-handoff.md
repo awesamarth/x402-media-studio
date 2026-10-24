@@ -1,5 +1,7 @@
 # Normal downloader runtime handoff
 
+> Historical runtime record. YouTube support and the home proxy have since been removed. Do not reactivate platform imports; see [current URL support](url-import.md). The generic fixture runner and rootless Docker installation are retained.
+
 This handoff covers the normal isolated runtime only. YouTube-specific work is owned separately; do not modify its extraction settings or introduce cookies, alternate clients or routing bypasses here.
 
 ## Completed

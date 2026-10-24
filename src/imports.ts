@@ -22,11 +22,13 @@ export function importRequest(value:any):Request {
 }
 /** Every downloader subprocess is restricted to the enforcing local CONNECT proxy. */
 export async function download(url:string,media:'audio'|'video',dir:string,steps:Step[]) {
+ // Reject retired sources even for persisted jobs or direct internal calls, before any network I/O.
+ validateRemoteUrl(url);
  if(isDirectFileSource(url)){const bytes=await fetchDirectFile(url);const path=join(dir,'direct-input');await writeFile(path,bytes);const probe=JSON.parse(await command(['ffprobe','-protocol_whitelist','file,pipe','-v','quiet','-show_format','-of','json',path],{timeoutMs:10000}));const duration=Number(probe.format?.duration);if(!Number.isFinite(duration)||duration<=0||duration>(media==='audio'?300:600))throw Error('Direct media exceeds the supported duration');return bytes}
  if(!['darwin','linux'].includes(process.platform))throw Error('Unsupported import runner platform');
  const linux=process.platform==='linux'||process.env.IMPORT_RUNNER==='docker';
  const proxyDir=linux?await mkdtemp(join(dir,'.proxy-')):undefined;
- const proxy=await startImportProxy({...proxyDir?{socketPath:join(proxyDir,'proxy.sock')}:{},youtubeProxy:process.env.IMPORT_YOUTUBE_PROXY_URL});
+ const proxy=await startImportProxy(proxyDir?{socketPath:join(proxyDir,'proxy.sock')}:{});
  const remoteDir=linux?'/work':dir;
  const policy=`(version 1)(allow default)(deny network-outbound)(allow network-outbound (remote tcp "localhost:${proxy.port}"))`;
  const jsRuntime=linux?'/usr/local/bin/node':(process.env.YT_DLP_JS_RUNTIME||'/usr/local/bin/node');

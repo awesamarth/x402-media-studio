@@ -27,7 +27,7 @@ Compression defaults to H.264 **CRF 20 / medium**, preserving dimensions and tim
 - Transcription's SRT, VTT, and JSON files together count as **one** operation.
 - A frames step including OCR counts as **one** operation.
 - Transcription → translation → frames/OCR → compression costs **0.04 USDC**.
-- Clipping from a validated YouTube source is free; other operations on that source remain billable. Local/non-YouTube clipping is billable.
+- Clipping counts as one billable operation. YouTube URL imports are not supported.
 - Uploads, quotes, status polling, and downloads are free. Cache hits do not change the quoted operation price.
 
 Quotes are authoritative and expire after four minutes. Existing quotes retain their saved amount. Free mode and zero-total workflows do not create payment proposals. Payments and processing have separate states: a failed job does not automatically refund a settled payment. Never repeat a purchase to poll an uncertain payment.
@@ -140,7 +140,7 @@ Local engine paths are written to ignored `.env.local` by setup. Custom installa
 
 Backend settings include `HOST`, `PORT`, `DATA_DIR`, and `BILLING_MODE`. Paid mode requires `PAYMENT_RECIPIENT`, `PAYMENT_NETWORK=eip155:8453`, an exact HTTPS `PAYMENT_FACILITATOR` origin, and `PUBLIC_API_ORIGIN`. Missing paid configuration fails startup rather than falling back to free. Keep credentials and runtime data out of Git; the receiving wallet and facilitator configuration belong on the backend, not in the plugin bundle.
 
-URL imports are restricted to supported HTTPS hosts. Direct files from supported hosts and YouTube extraction have different runtime requirements. **YouTube availability depends on the deployment environment and provider access**; a valid quote is not a guarantee that a remote source can be retrieved. Private, authenticated, restricted, playlist, and live sources are not supported. See [URL import configuration](docs/url-import.md).
+URL imports accept **direct HTTPS media files on `raw.githubusercontent.com` and `media.w3.org` only**. YouTube and other video-platform URLs are not supported, including by the local CLI. Upload a local file instead. No home proxy, SSH relay, or video-platform feature flag is required. Redirects and arbitrary hosts are rejected. See [URL import configuration](docs/url-import.md).
 
 ## Limits and lifecycle
 

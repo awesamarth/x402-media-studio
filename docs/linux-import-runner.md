@@ -1,5 +1,7 @@
 # Linux ARM64 URL runner — preparation only
 
+> Historical setup record for the retained generic fixture runner. YouTube hosts and home-proxy support have been removed. Public direct-file imports do not require this runner; see [current URL support](url-import.md).
+
 No VPS changes have been made. The backend runs on the Linux host and launches the dedicated downloader image. It does not run arbitrary client-selected commands or mount provider credentials. The host owns the enforcing CONNECT proxy; the downloader sees only its writable work directory and a read-only mount containing a Unix proxy socket. Docker `--network none` provides no external route. A small Python relay exposes the Unix socket at container loopback port 7777 for yt-dlp. There is no host TCP proxy port to expose or firewall rule to add.
 
 The runner also uses a read-only root, drops all capabilities, enables no-new-privileges, sets 64 PIDs, 512 MiB RAM/no swap, one CPU, and a 32 MiB noexec temporary filesystem. It runs as the backend UID/GID. No Docker socket is mounted into the downloader. The trusted backend needs local Docker daemon permission; rootful Docker access is privileged operator authority. Use a local daemon whose bind paths refer to this same Linux filesystem; remote DOCKER_HOST deployments are unsupported. Missing image fails because runtime uses --pull never. The child has its own 175-second deadline in addition to the host timeout. Host crash closes the Unix proxy; the child deadline bounds leftover work.
